@@ -7,8 +7,89 @@ const App = {
   currentNav: 'dashboard',
 
   init () {
+    this.renderSidebarNav();
     this.updateUserCard();
     this.renderDashboard();
+  },
+
+  renderSidebarNav () {
+    const isNurse = Auth.user.role === 'nurse';
+    const subEl = document.querySelector('.brand-sub');
+    const titleEl = document.querySelector('.sidebar-menu-title');
+    const navEl = document.querySelector('.sidebar-nav');
+
+    if (subEl) subEl.textContent = isNurse ? 'NURSE BEDSIDE CIS' : 'MedTech Solution';
+    if (titleEl) titleEl.textContent = isNurse ? 'NURSING SHIFT MENU' : 'Main Menu';
+
+    if (!navEl) return;
+
+    if (isNurse) {
+      navEl.innerHTML = `
+        <div class="nav-item ${this.currentNav === 'dashboard' ? 'active' : ''}" onclick="App.setNav('dashboard', this)" title="Nurse Workspace">
+          <span class="nav-icon">${Icons.svg('activity', 18)}</span>
+          <span class="nav-label">Nurse Workspace</span>
+        </div>
+        <div class="nav-item ${this.currentNav === 'patients' ? 'active' : ''}" onclick="App.setNav('patients', this)" title="My Assigned Inpatients">
+          <span class="nav-icon">${Icons.svg('users', 18)}</span>
+          <span class="nav-label">Assigned Inpatients</span>
+        </div>
+        <div class="nav-item" onclick="App.openLogVitalsModal('IP26-001883')" title="Log Bedside Vitals">
+          <span class="nav-icon">${Icons.svg('fileText', 18)}</span>
+          <span class="nav-label">+ Log Bedside Vitals</span>
+        </div>
+        <div class="nav-item ${this.currentNav === 'beds' ? 'active' : ''}" onclick="App.setNav('beds', this)" title="Ward 2001 Bed Map">
+          <span class="nav-icon">${Icons.svg('bed', 18)}</span>
+          <span class="nav-label">Ward 2001 Bed Map</span>
+        </div>
+        <div class="nav-item ${this.currentNav === 'pharmacy' ? 'active' : ''}" onclick="App.setNav('pharmacy', this)" title="Shift Meds & Supplies">
+          <span class="nav-icon">${Icons.svg('revenue', 18)}</span>
+          <span class="nav-label">Medication Schedule</span>
+        </div>
+        <div class="nav-item ${this.currentNav === 'doctors' ? 'active' : ''}" onclick="App.setNav('doctors', this)" title="Attending Doctors">
+          <span class="nav-icon">${Icons.svg('stethoscope', 18)}</span>
+          <span class="nav-label">Attending Doctors</span>
+        </div>
+        <div class="nav-item" onclick="Auth.logout()" title="Logout Session" style="margin-top:10px; color:var(--danger)">
+          <span class="nav-icon">${Icons.svg('lock', 18, 'var(--danger)')}</span>
+          <span class="nav-label">Logout Session</span>
+        </div>
+      `;
+    } else {
+      navEl.innerHTML = `
+        <div class="nav-item ${this.currentNav === 'dashboard' ? 'active' : ''}" onclick="App.setNav('dashboard', this)" title="Dashboard">
+          <span class="nav-icon">${Icons.svg('activity', 18)}</span>
+          <span class="nav-label">Dashboard</span>
+        </div>
+        <div class="nav-item ${this.currentNav === 'patients' ? 'active' : ''}" onclick="App.setNav('patients', this)" title="Patient Directory">
+          <span class="nav-icon">${Icons.svg('users', 18)}</span>
+          <span class="nav-label">Patient Directory</span>
+        </div>
+        <div class="nav-item" onclick="App.setNav('triage', this)" title="ER Intake & Triage">
+          <span class="nav-icon">${Icons.svg('hospital', 18)}</span>
+          <span class="nav-label">ER Intake & Triage</span>
+        </div>
+        <div class="nav-item ${this.currentNav === 'beds' ? 'active' : ''}" onclick="App.setNav('beds', this)" title="Bed & Ward System">
+          <span class="nav-icon">${Icons.svg('bed', 18)}</span>
+          <span class="nav-label">Bed & Ward System</span>
+        </div>
+        <div class="nav-item ${this.currentNav === 'doctors' ? 'active' : ''}" onclick="App.setNav('doctors', this)" title="Doctor Directory">
+          <span class="nav-icon">${Icons.svg('stethoscope', 18)}</span>
+          <span class="nav-label">Doctor Directory</span>
+        </div>
+        <div class="nav-item ${this.currentNav === 'lab' ? 'active' : ''}" onclick="App.setNav('lab', this)" title="Lab & Diagnostics">
+          <span class="nav-icon">${Icons.svg('fileText', 18)}</span>
+          <span class="nav-label">Lab & Diagnostics</span>
+        </div>
+        <div class="nav-item ${this.currentNav === 'pharmacy' ? 'active' : ''}" onclick="App.setNav('pharmacy', this)" title="Pharmacy & Supplies">
+          <span class="nav-icon">${Icons.svg('revenue', 18)}</span>
+          <span class="nav-label">Pharmacy & Supplies</span>
+        </div>
+        <div class="nav-item" onclick="Auth.logout()" title="Logout Session" style="margin-top:10px; color:var(--danger)">
+          <span class="nav-icon">${Icons.svg('lock', 18, 'var(--danger)')}</span>
+          <span class="nav-label">Logout Session</span>
+        </div>
+      `;
+    }
   },
 
   updateUserCard () {
@@ -61,8 +142,7 @@ const App = {
 
   setNav (navKey, el) {
     this.currentNav = navKey;
-    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    if (el) el.classList.add('active');
+    this.renderSidebarNav();
 
     const mainView = document.getElementById('main-view');
     if (!mainView) return;
