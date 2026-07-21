@@ -4,15 +4,18 @@
 
 const PatientsModule = {
   render (container) {
+    const isNurse = Auth.user.role === 'nurse';
+    const initialList = isNurse ? App.getNursePatients() : DB.patients;
+
     container.innerHTML = `
       <!-- Top Page Header -->
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
         <div>
           <h2 style="font-size:1.4rem; font-weight:800; color:var(--text-dark); display:flex; align-items:center; gap:10px;">
             <span>${Icons.svg('users', 24, 'var(--primary-teal)')}</span>
-            <span>Patient Master Directory</span>
+            <span>${isNurse ? 'Nurse Assigned Patient Roster' : 'Patient Master Directory'}</span>
           </h2>
-          <div style="font-size:0.8rem; color:var(--text-muted);">Complete Centralized Medical & Demographic Patient Directory</div>
+          <div style="font-size:0.8rem; color:var(--text-muted);">${isNurse ? 'Filtered to Inpatients Assigned to RN Maria Santos (Station A Ward 2001)' : 'Complete Centralized Medical & Demographic Patient Directory'}</div>
         </div>
 
         <div style="display:flex; gap:10px;">
@@ -33,7 +36,13 @@ const PatientsModule = {
             <input placeholder="Search by name, ID, or PhilHealth..." oninput="PatientsModule.filter(this.value)">
           </div>
 
-          <div style="display:flex; gap:10px;">
+          <div style="display:flex; gap:10px; align-items:center;">
+            ${isNurse ? `
+              <span style="font-size:0.75rem; font-weight:700; background:#F0FDF4; color:#166534; border:1px solid #86EFAC; padding:6px 12px; border-radius:8px;">
+                🔒 Ward 2001 Inpatients Only
+              </span>
+            ` : ''}
+
             <select class="select-filter" onchange="PatientsModule.filterByDept(this.value)">
               <option value="ALL">All Departments</option>
               <option value="Emergency Care">Emergency Care</option>
@@ -68,7 +77,7 @@ const PatientsModule = {
               </tr>
             </thead>
             <tbody id="patients-dir-tbody">
-              ${this._renderRows(DB.patients)}
+              ${this._renderRows(initialList)}
             </tbody>
           </table>
         </div>
@@ -77,6 +86,7 @@ const PatientsModule = {
   },
 
   _renderRows (list) {
+    const isNurse = Auth.user.role === 'nurse';
     if (!list.length) return `<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted);">No patients match the search criteria.</td></tr>`;
     return list.map(p => `
       <tr ondblclick="App.promptSecurityCheck('${p.id}')" title="Double click to open full EHR record">
@@ -96,9 +106,16 @@ const PatientsModule = {
         <td><span class="badge-status ${DH.statusBadge(p.status)}">${p.status}</span></td>
         <td style="font-size:0.8rem; color:var(--text-muted);">${p.registeredDate}</td>
         <td>
-          <button class="btn-teal" style="padding:4px 10px; font-size:0.75rem;" onclick="App.promptSecurityCheck('${p.id}')">
-            ${Icons.svg('lock', 13)} Open File
-          </button>
+          <div style="display:flex; gap:6px;">
+            ${isNurse ? `
+              <button class="btn-teal" style="padding:4px 10px; font-size:0.75rem;" onclick="event.stopPropagation(); App.openLogVitalsModal('${p.id}')">
+                ${Icons.svg('activity', 13)} Log Vitals
+              </button>
+            ` : ''}
+            <button class="btn-glass" style="padding:4px 10px; font-size:0.75rem;" onclick="App.promptSecurityCheck('${p.id}')">
+              ${Icons.svg('lock', 13)} Open File
+            </button>
+          </div>
         </td>
       </tr>
     `).join('');

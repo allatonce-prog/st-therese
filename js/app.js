@@ -7,7 +7,56 @@ const App = {
   currentNav: 'dashboard',
 
   init () {
+    this.updateUserCard();
     this.renderDashboard();
+  },
+
+  updateUserCard () {
+    const user = Auth.user;
+    const userCard = document.querySelector('.sidebar-user-card');
+    if (!userCard) return;
+
+    const isNurse = user.role === 'nurse';
+    userCard.innerHTML = `
+      <div class="user-info">
+        <div class="user-avatar-box" style="background:${isNurse ? 'linear-gradient(135deg, #00A896, #0288D1)' : ''}">${user.avatar || 'AU'}</div>
+        <div class="user-text-wrap">
+          <div style="font-weight:800; font-size:0.84rem; color:var(--text-dark);">${user.name}</div>
+          <div style="font-size:0.7rem; color:${isNurse ? 'var(--primary-teal)' : 'var(--text-muted)'}; font-weight:700;">${Auth.roleLabel(user.role)}${user.ward ? ` (${user.ward})` : ''}</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:6px; align-items:center;">
+        <button class="btn-glass" style="padding:4px 8px; font-size:0.7rem; color:${isNurse ? 'var(--primary-blue)' : 'var(--primary-teal)'};" onclick="App.switchRole('${isNurse ? 'admin' : 'nurse'}')" title="Click to test role toggle">
+          ${isNurse ? 'Admin View' : 'Nurse View'}
+        </button>
+        <button class="btn-glass" style="padding:4px 8px; font-size:0.7rem; color:var(--danger);" onclick="Auth.logout()" title="Logout">
+          Logout
+        </button>
+      </div>
+    `;
+  },
+
+  switchRole (roleKey) {
+    if (roleKey === 'nurse') {
+      const nurseUser = DB.users.find(u => u.role === 'nurse') || DB.users[4];
+      Auth._user = nurseUser;
+      localStorage.setItem('st_user', JSON.stringify(nurseUser));
+      this.toast('Switched to Nurse UI/UX — RN Maria Santos (Ward 2001)', 'success');
+    } else {
+      const adminUser = DB.users.find(u => u.role === 'admin') || DB.users[0];
+      Auth._user = adminUser;
+      localStorage.setItem('st_user', JSON.stringify(adminUser));
+      this.toast('Switched to Admin ERP Dashboard View', 'info');
+    }
+    this.init();
+  },
+
+  getNursePatients () {
+    if (Auth.user.role === 'nurse') {
+      // Return patients assigned to Nurse Maria Santos (Station A Ward 2001)
+      return DB.patients.filter(p => p.id === 'IP26-001883' || p.id === '0000350' || p.id === 'P-2024-001' || p.id === '0000450');
+    }
+    return DB.patients;
   },
 
   setNav (navKey, el) {
@@ -63,52 +112,93 @@ const App = {
     const mainView = document.getElementById('main-view');
     if (!mainView) return;
 
-    // Restore Main ERP Dashboard View if returning from modules or EHR view
-    if (!mainView.querySelector('.top-metrics-bar')) {
-      mainView.innerHTML = `
-        <!-- Top Toolbar Bar -->
-        <div class="erp-topbar">
-          <div class="erp-topbar-left">
-            <!-- Search Box -->
-            <div class="search-box">
-              <span class="search-box-icon" id="sb-icon"></span>
-              <input placeholder="Search patient, ID..." oninput="App.filterPatients(this.value)">
-            </div>
+    const isNurse = Auth.user.role === 'nurse';
+    const nursePatients = this.getNursePatients();
 
-            <!-- Filters -->
-            <select class="select-filter">
-              <option>All Patients</option>
-              <option>Admitted Only</option>
-              <option>Discharged</option>
-            </select>
-            <select class="select-filter">
-              <option>Healthcare</option>
-              <option>Emergency Care</option>
-              <option>Internal Medicine</option>
-              <option>Surgery</option>
-            </select>
+    // Re-render Main Workspace Canvas
+    mainView.innerHTML = `
+      <!-- Top Toolbar Bar -->
+      <div class="erp-topbar">
+        <div class="erp-topbar-left">
+          <div class="search-box">
+            <span class="search-box-icon" id="sb-icon"></span>
+            <input placeholder="${isNurse ? 'Search assigned patient, ID...' : 'Search patient, ID...'}" oninput="App.filterPatients(this.value)">
           </div>
 
-          <div class="erp-topbar-right">
-            <!-- Action Buttons -->
-            <button class="btn-teal" onclick="App.openIntakeWizardModal()">
-              <span id="btn-plus-icon"></span> + New Patient Card
-            </button>
-            <button class="btn-glass" onclick="App.toast('New Issue Slip created','info')">
-              <span id="btn-issue-icon"></span> New Issue
-            </button>
-            <button class="btn-glass" onclick="App.toast('Report List Generated','success')">
-              <span id="btn-report-icon"></span> Report List
-            </button>
-
-            <!-- Bell Notification Icon -->
-            <div style="width:38px; height:38px; border-radius:10px; background:#FFFFFF; border:1px solid #CBD5E1; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="App.toast('0 New Notifications','info')" id="bell-wrap"></div>
-          </div>
+          <select class="select-filter">
+            <option>${isNurse ? 'My Assigned Inpatients' : 'All Patients'}</option>
+            <option>Admitted Only</option>
+            <option>Discharged</option>
+          </select>
+          <select class="select-filter">
+            <option>${isNurse ? 'Ward 2001 (Station A)' : 'Healthcare'}</option>
+            <option>Emergency Care</option>
+            <option>Internal Medicine</option>
+            <option>Surgery</option>
+          </select>
         </div>
 
-        <!-- Integrated Top Metrics Bar -->
-        <div class="top-metrics-bar">
-          <!-- OPD Count + Sparkline -->
+        <div class="erp-topbar-right">
+          ${isNurse ? `
+            <span style="font-size:0.78rem; font-weight:700; background:#E0F2FE; color:#0288D1; padding:6px 12px; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
+              <span>${Icons.svg('activity', 15, '#0288D1')}</span>
+              <span>Duty Shift: RN Maria Santos (Ward 2001)</span>
+            </span>
+          ` : ''}
+          <button class="btn-teal" onclick="App.openIntakeWizardModal()">
+            <span id="btn-plus-icon"></span> + New Patient Card
+          </button>
+          <button class="btn-glass" onclick="App.toast('New Issue Slip created','info')">
+            <span id="btn-issue-icon"></span> New Issue
+          </button>
+
+          <div style="width:38px; height:38px; border-radius:10px; background:#FFFFFF; border:1px solid #CBD5E1; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="App.toast('${isNurse ? '2 Pending Vitals Checks' : '0 New Notifications'}','info')" id="bell-wrap"></div>
+        </div>
+      </div>
+
+      ${isNurse ? `
+        <!-- Nurse Workspace Welcome Banner -->
+        <div style="padding:14px 18px; background:linear-gradient(135deg, #F0FDF4, #E0F2FE); border:1px solid #86EFAC; border-radius:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg, #00A896, #0288D1); color:#FFF; font-weight:800; font-size:1.1rem; display:flex; align-items:center; justify-content:center;">MS</div>
+            <div>
+              <div style="font-weight:800; font-size:0.95rem; color:var(--text-dark);">Nurse Bedside Clinical Workspace — Station A (Ward 2001)</div>
+              <div style="font-size:0.78rem; color:var(--text-secondary);">Logged in as <strong>RN Maria Santos</strong> · Displaying <strong>${nursePatients.length} Inpatients</strong> assigned under your care</div>
+            </div>
+          </div>
+          <button class="btn-teal" style="padding:6px 12px; font-size:0.78rem;" onclick="App.openLogVitalsModal('${nursePatients[0]?.id || 'IP26-001883'}')">
+            ${Icons.svg('activity', 15)} Log Bedside Vitals
+          </button>
+        </div>
+      ` : ''}
+
+      <!-- Top Metrics Bar (Role Tailored) -->
+      <div class="top-metrics-bar">
+        ${isNurse ? `
+          <div class="top-metric-card" style="border-left:4px solid var(--primary-teal);">
+            <div class="tm-label">Assigned Inpatients</div>
+            <div class="tm-value" style="color:var(--primary-teal)">${nursePatients.length} Patients</div>
+            <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Station A Ward 2001</div>
+          </div>
+
+          <div class="top-metric-card" style="border-left:4px solid var(--warning);">
+            <div class="tm-label">Shift Vitals Due</div>
+            <div class="tm-value" style="color:var(--warning)">2 Pending</div>
+            <div style="font-size:0.72rem; color:var(--warning); font-weight:700; margin-top:2px;">10:30 PM Checkpoint</div>
+          </div>
+
+          <div class="top-metric-card" style="border-left:4px solid var(--primary-blue);">
+            <div class="tm-label">Medication Rounds</div>
+            <div class="tm-value" style="color:var(--primary-blue)">3 Orders</div>
+            <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Biogesic, Gestox, Cefuroxime</div>
+          </div>
+
+          <div class="top-metric-card" style="cursor:pointer; border-left:4px solid var(--success);" onclick="App.setNav('beds')">
+            <div class="tm-label">Ward 2001 Occupancy</div>
+            <div class="tm-value" style="color:var(--success)">94.6%</div>
+            <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">35 Occupied / 37 Total Beds</div>
+          </div>
+        ` : `
           <div class="top-metric-card" style="padding-bottom:10px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
               <div class="tm-label">OPD Count</div>
@@ -138,66 +228,81 @@ const App = {
             <div class="tm-value" style="color:var(--danger)">₱1,337,000.00</div>
             <div style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">Financial Accounts</div>
           </div>
+        `}
+      </div>
+
+      <!-- Analytics Grid -->
+      <div class="analytics-grid" style="grid-template-columns: 2.2fr 1.3fr 1.2fr;">
+        
+        <!-- Panel 1: Admissions Trend / Nurse Rounds -->
+        <div class="analytics-card">
+          <div class="analytics-hdr">
+            <h3>${isNurse ? 'NURSE BEDSIDE ROUNDS & VITAL SIGNS TREND' : 'PATIENT ADMISSIONS TREND'}</h3>
+            <select class="select-filter" style="padding:4px 10px; font-size:0.75rem;">
+              <option>${isNurse ? 'Ward 2001 Inpatients' : 'Patient admissions'}</option>
+            </select>
+          </div>
+          <div id="admissions-chart-wrap"></div>
         </div>
 
-        <!-- Analytics Grid (Admissions Trend + Bed Status Donut Graph + Billing Summary) -->
-        <div class="analytics-grid" style="grid-template-columns: 2.2fr 1.3fr 1.2fr;">
+        <!-- Panel 2: BED CAPACITY & STATUS -->
+        <div class="analytics-card" style="cursor:pointer;" onclick="App.setNav('beds')">
+          <div class="analytics-hdr">
+            <h3>${isNurse ? 'WARD 2001 BED CAPACITY' : 'BED CAPACITY & STATUS'}</h3>
+            <span id="bed-hdr-icon" style="color:var(--primary-teal); cursor:pointer;"></span>
+          </div>
           
-          <!-- Panel 1: Patient Admissions Trend -->
-          <div class="analytics-card">
-            <div class="analytics-hdr">
-              <h3>PATIENT ADMISSIONS TREND</h3>
-              <select class="select-filter" style="padding:4px 10px; font-size:0.75rem;">
-                <option>Patient admissions</option>
-              </select>
+          <div id="bed-donut-wrap"></div>
+
+          <div style="margin-top:16px; padding-top:14px; border-top:1px solid #E2E8F0; display:flex; flex-direction:column; gap:8px; font-size:0.82rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-dark);">
+                <span style="width:10px; height:10px; border-radius:50%; background:#94A3B8;"></span> Total Capacity
+              </span>
+              <strong style="font-size:0.9rem;">${isNurse ? '37 Beds' : '226 Beds'}</strong>
             </div>
-            <!-- Admissions Line/Area Chart -->
-            <div id="admissions-chart-wrap"></div>
-          </div>
 
-          <!-- Panel 2: BED CAPACITY & STATUS DONUT GRAPH -->
-          <div class="analytics-card" style="cursor:pointer;" onclick="App.setNav('beds')">
-            <div class="analytics-hdr">
-              <h3>BED CAPACITY & STATUS</h3>
-              <span id="bed-hdr-icon" style="color:var(--primary-teal); cursor:pointer;"></span>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-dark);">
+                <span style="width:10px; height:10px; border-radius:50%; background:#16A34A;"></span> Occupied Beds
+              </span>
+              <strong style="color:#16A34A; font-size:0.9rem;">${isNurse ? '35 Beds' : '166 Beds'}</strong>
             </div>
-            
-            <!-- Bed Donut Ring Graph -->
-            <div id="bed-donut-wrap"></div>
 
-            <!-- Detailed Bed Breakdown Legend -->
-            <div style="margin-top:16px; padding-top:14px; border-top:1px solid #E2E8F0; display:flex; flex-direction:column; gap:8px; font-size:0.82rem;">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-dark);">
-                  <span style="width:10px; height:10px; border-radius:50%; background:#94A3B8;"></span> Total Capacity
-                </span>
-                <strong style="font-size:0.9rem;">226 Beds</strong>
-              </div>
-
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-dark);">
-                  <span style="width:10px; height:10px; border-radius:50%; background:#16A34A;"></span> Occupied Beds
-                </span>
-                <strong style="color:#16A34A; font-size:0.9rem;">166 Beds</strong>
-              </div>
-
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-dark);">
-                  <span style="width:10px; height:10px; border-radius:50%; background:#00BCD4;"></span> Available Beds
-                </span>
-                <strong style="color:#00BCD4; font-size:0.9rem;">60 Beds</strong>
-              </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-dark);">
+                <span style="width:10px; height:10px; border-radius:50%; background:#00BCD4;"></span> Available Beds
+              </span>
+              <strong style="color:#00BCD4; font-size:0.9rem;">${isNurse ? '2 Beds' : '60 Beds'}</strong>
             </div>
           </div>
+        </div>
 
-          <!-- Panel 3: Billing Summary Donut -->
-          <div class="analytics-card">
-            <div class="analytics-hdr">
-              <h3>BILLING SUMMARY</h3>
+        <!-- Panel 3: Billing / Care Team Roster -->
+        <div class="analytics-card">
+          <div class="analytics-hdr">
+            <h3>${isNurse ? 'ATTENDING DOCTORS' : 'BILLING SUMMARY'}</h3>
+          </div>
+          ${isNurse ? `
+            <div style="display:flex; flex-direction:column; gap:12px; font-size:0.82rem; margin-top:10px;">
+              <div style="display:flex; align-items:center; gap:10px; padding-bottom:8px; border-bottom:1px solid #E2E8F0;">
+                <div style="width:36px; height:36px; border-radius:50%; background:#0288D1; color:#FFF; font-weight:800; display:flex; align-items:center; justify-content:center;">AP</div>
+                <div>
+                  <div style="font-weight:700; color:var(--text-dark);">Dr. April Sunshine Pelias</div>
+                  <div style="font-size:0.74rem; color:var(--primary-teal);">OB-GYN / Internal Medicine</div>
+                </div>
+              </div>
+
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:36px; height:36px; border-radius:50%; background:#00A896; color:#FFF; font-weight:800; display:flex; align-items:center; justify-content:center;">GT</div>
+                <div>
+                  <div style="font-weight:700; color:var(--text-dark);">Dr. Gedelene Torres</div>
+                  <div style="font-size:0.74rem; color:var(--primary-teal);">Cardiology & Critical Care</div>
+                </div>
+              </div>
             </div>
-            <!-- Donut Ring Chart -->
+          ` : `
             <div id="billing-donut-wrap"></div>
-
             <div style="margin-top:16px; padding-top:12px; border-top:1px solid #E2E8F0;">
               <div style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Pending Payments</div>
               <div style="font-size:1.3rem; font-weight:800; color:var(--text-dark); margin-top:2px;">₱1,337,000.00</div>
@@ -205,70 +310,73 @@ const App = {
                 <div style="width:75%; height:100%; background:var(--primary-teal); border-radius:3px;"></div>
               </div>
             </div>
-          </div>
-
+          `}
         </div>
 
-        <!-- Recent Patient List Table Card -->
-        <div class="erp-table-card">
-          <div class="table-hdr">
-            <h3>RECENT PATIENT LIST</h3>
-            <button class="btn-teal" style="padding:6px 14px; font-size:0.78rem;" onclick="App.openIntakeWizardModal()">+ Add Patient</button>
-          </div>
+      </div>
 
-          <div style="overflow-x:auto;">
-            <table class="erp-table">
-              <thead>
-                <tr>
-                  <th>Patient Name</th>
-                  <th>ID</th>
-                  <th>Department</th>
-                  <th>Status</th>
-                  <th>Last Update</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="recent-patients-tbody">
-                ${this._renderPatientRows(DB.patients)}
-              </tbody>
-            </table>
-          </div>
+      <!-- Recent Patient List Table Card -->
+      <div class="erp-table-card">
+        <div class="table-hdr">
+          <h3 style="display:flex; align-items:center; gap:8px;">
+            <span>${isNurse ? 'MY ASSIGNED INPATIENT ROSTER (WARD 2001)' : 'RECENT PATIENT LIST'}</span>
+            ${isNurse ? `<span style="font-size:0.7rem; font-weight:700; background:#F0FDF4; color:#166534; border:1px solid #86EFAC; padding:2px 8px; border-radius:6px;">🔒 RN Maria Santos Patients</span>` : ''}
+          </h3>
+          <button class="btn-teal" style="padding:6px 14px; font-size:0.78rem;" onclick="App.openIntakeWizardModal()">+ Add Patient</button>
         </div>
-      `;
 
-      // Re-inject vector icons and charts
-      setTimeout(() => {
-        document.getElementById('tm-opd-icon').innerHTML    = Icons.svg('users', 16, 'var(--primary-teal)');
-        document.getElementById('tm-rev-icon').innerHTML    = Icons.svg('trendingUp', 12, '#166534');
-        document.getElementById('bed-hdr-icon').innerHTML   = Icons.svg('bed', 18, 'var(--primary-teal)');
+        <div style="overflow-x:auto;">
+          <table class="erp-table">
+            <thead>
+              <tr>
+                <th>Patient Name</th>
+                <th>ID</th>
+                <th>Department</th>
+                <th>Status</th>
+                <th>Last Update</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="recent-patients-tbody">
+              ${this._renderPatientRows(nursePatients)}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
 
-        document.getElementById('sb-icon').innerHTML        = Icons.svg('search', 16, '#94A3B8');
-        document.getElementById('btn-plus-icon').innerHTML  = Icons.svg('plus', 16, '#FFF');
-        document.getElementById('btn-issue-icon').innerHTML = Icons.svg('calendar', 16, '#475569');
-        document.getElementById('btn-report-icon').innerHTML= Icons.svg('fileText', 16, '#475569');
-        document.getElementById('bell-wrap').innerHTML      = Icons.svg('bell', 18, '#475569');
-
+    // Re-inject vector icons and charts
+    setTimeout(() => {
+      if (!isNurse && document.getElementById('tm-opd-icon')) {
+        document.getElementById('tm-opd-icon').innerHTML  = Icons.svg('users', 16, 'var(--primary-teal)');
+        document.getElementById('tm-rev-icon').innerHTML  = Icons.svg('trendingUp', 12, '#166534');
         document.getElementById('opd-sparkline-wrap').innerHTML   = Charts.opdSparkline();
-        document.getElementById('bed-donut-wrap').innerHTML       = Charts.bedStatusDonut(166, 60);
-        document.getElementById('admissions-chart-wrap').innerHTML  = Charts.admissionsTrend();
         document.getElementById('billing-donut-wrap').innerHTML    = Charts.billingDonut();
-      }, 10);
-    } else {
-      const tbody = document.getElementById('recent-patients-tbody');
-      if (tbody) tbody.innerHTML = this._renderPatientRows(DB.patients);
-    }
+      }
+
+      if (document.getElementById('bed-hdr-icon')) document.getElementById('bed-hdr-icon').innerHTML = Icons.svg('bed', 18, 'var(--primary-teal)');
+      if (document.getElementById('sb-icon'))       document.getElementById('sb-icon').innerHTML      = Icons.svg('search', 16, '#94A3B8');
+      if (document.getElementById('btn-plus-icon')) document.getElementById('btn-plus-icon').innerHTML= Icons.svg('plus', 16, '#FFF');
+      if (document.getElementById('btn-issue-icon'))document.getElementById('btn-issue-icon').innerHTML= Icons.svg('calendar', 16, '#475569');
+      if (document.getElementById('bell-wrap'))     document.getElementById('bell-wrap').innerHTML    = Icons.svg('bell', 18, '#475569');
+
+      if (document.getElementById('bed-donut-wrap'))      document.getElementById('bed-donut-wrap').innerHTML      = Charts.bedStatusDonut(isNurse ? 35 : 166, isNurse ? 2 : 60);
+      if (document.getElementById('admissions-chart-wrap')) document.getElementById('admissions-chart-wrap').innerHTML = Charts.admissionsTrend();
+    }, 10);
   },
 
   _renderPatientRows (list) {
-    if (!list.length) return `<tr><td colspan="6" class="text-center p-4 text-muted">No patient records match query.</td></tr>`;
-    return list.map(p => `
+    const isNurse = Auth.user.role === 'nurse';
+    const patientList = isNurse ? this.getNursePatients() : list;
+    if (!patientList.length) return `<tr><td colspan="6" class="text-center p-4 text-muted">No patient records match query.</td></tr>`;
+    return patientList.map(p => `
       <tr ondblclick="App.promptSecurityCheck('${p.id}')" title="Double click to open full patient record">
         <td>
           <div class="user-avatar-cell">
             <div class="avatar-img">${p.firstName[0]}${p.lastName[0]}</div>
             <div>
               <div style="font-weight:700; color:var(--text-dark);">${p.firstName} ${p.lastName}</div>
-              <div style="font-size:0.75rem; color:var(--text-muted);">${p.sex} · ${p.age} yrs</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">${p.sex} · ${p.age} yrs · Blood: ${p.bloodType}</div>
             </div>
           </div>
         </td>
@@ -277,20 +385,113 @@ const App = {
         <td><span class="badge-status ${DH.statusBadge(p.status)}">${p.status}</span></td>
         <td style="font-size:0.8rem; color:var(--text-muted);">${p.registeredDate}</td>
         <td>
-          <button class="btn-glass" style="padding:4px 10px; font-size:0.75rem;" onclick="App.promptSecurityCheck('${p.id}')">
-            ${Icons.svg('lock', 13)} Open File
-          </button>
+          <div style="display:flex; gap:6px;">
+            ${isNurse ? `
+              <button class="btn-teal" style="padding:4px 10px; font-size:0.75rem;" onclick="event.stopPropagation(); App.openLogVitalsModal('${p.id}')">
+                ${Icons.svg('activity', 13)} Log Vitals
+              </button>
+            ` : ''}
+            <button class="btn-glass" style="padding:4px 10px; font-size:0.75rem;" onclick="App.promptSecurityCheck('${p.id}')">
+              ${Icons.svg('lock', 13)} Open EHR
+            </button>
+          </div>
         </td>
       </tr>
     `).join('');
   },
 
   filterPatients (q) {
+    const isNurse = Auth.user.role === 'nurse';
+    const sourceList = isNurse ? this.getNursePatients() : DB.patients;
     const list = q
-      ? DB.patients.filter(p => `${p.firstName} ${p.lastName} ${p.id} ${p.department||''}`.toLowerCase().includes(q.toLowerCase()))
-      : DB.patients;
+      ? sourceList.filter(p => `${p.firstName} ${p.lastName} ${p.id} ${p.department||''}`.toLowerCase().includes(q.toLowerCase()))
+      : sourceList;
     const tableBody = document.getElementById('recent-patients-tbody');
     if (tableBody) tableBody.innerHTML = this._renderPatientRows(list);
+  },
+
+  /* ── Nurse Quick Action Modal: Log Bedside Vitals ───────────── */
+  openLogVitalsModal (pid) {
+    const p = DH.getPatient(pid) || DB.patients[0];
+    App.modal(`
+      ${App.modalHeader(`Log Bedside Vitals: ${p.firstName} ${p.lastName} (${p.id})`, 'activity')}
+      <div class="modal-body" style="padding:18px 22px;">
+        <form onsubmit="App.saveVitals(event, '${p.id}')">
+          <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:12px 14px; margin-bottom:14px; display:flex; justify-content:space-between; font-size:0.84rem;">
+            <span><strong>Patient:</strong> ${p.firstName} ${p.lastName}</span>
+            <span><strong>Unit:</strong> Station A Ward 2001</span>
+            <span><strong>Nurse:</strong> RN Maria Santos</span>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div>
+              <label class="form-label">Blood Pressure (mmHg) *</label>
+              <input class="form-control-input" id="nv-bp" required value="110/70" placeholder="120/80">
+            </div>
+            <div>
+              <label class="form-label">Pulse / Heart Rate (bpm) *</label>
+              <input class="form-control-input" id="nv-pr" type="number" required value="84" placeholder="80">
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:14px;">
+            <div>
+              <label class="form-label">Oxygen SpO₂ (%) *</label>
+              <input class="form-control-input" id="nv-spo2" type="number" required value="98" placeholder="98">
+            </div>
+            <div>
+              <label class="form-label">Temperature (°C) *</label>
+              <input class="form-control-input" id="nv-temp" type="number" step="0.1" required value="36.7" placeholder="36.5">
+            </div>
+            <div>
+              <label class="form-label">Pain Scale (0-10) *</label>
+              <input class="form-control-input" id="nv-pain" type="number" min="0" max="10" required value="4">
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px; padding-top:14px; border-top:1px solid #E2E8F0;">
+            <button type="button" class="btn-glass" onclick="App.closeModal()">Cancel</button>
+            <button type="submit" class="btn-teal">
+              ${Icons.svg('check', 16)} Record Bedside Vitals
+            </button>
+          </div>
+        </form>
+      </div>
+    `, 'modal-md');
+  },
+
+  saveVitals (e, pid) {
+    e.preventDefault();
+    const p = DH.getPatient(pid);
+    const bp = document.getElementById('nv-bp').value;
+    const pr = document.getElementById('nv-pr').value;
+    const spo2 = document.getElementById('nv-spo2').value;
+    const temp = document.getElementById('nv-temp').value;
+    const pain = document.getElementById('nv-pain').value;
+
+    const existingIndex = DB.vitalSigns.findIndex(v => v.patientId === pid);
+    const newVital = {
+      id: DH.nextId('V'),
+      patientId: pid,
+      timestamp: DH.now(),
+      bp, pr: Number(pr), rr: 18, temp: Number(temp), spo2: Number(spo2), pain: Number(pain)
+    };
+
+    if (existingIndex >= 0) {
+      DB.vitalSigns[existingIndex] = newVital;
+    } else {
+      DB.vitalSigns.unshift(newVital);
+    }
+
+    this.closeModal();
+    this.toast(`Vitals recorded for ${p.firstName} ${p.lastName}! (BP: ${bp}, HR: ${pr} bpm, SpO₂: ${spo2}%)`, 'success');
+
+    if (this.currentNav === 'patients') {
+      const mainView = document.getElementById('main-view');
+      if (mainView) PatientsModule.render(mainView);
+    } else {
+      this.renderDashboard();
+    }
   },
 
   /* ── Security Authorization Check Modal ─────────────────── */
