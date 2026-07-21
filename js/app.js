@@ -14,16 +14,44 @@ const App = {
 
   renderSidebarNav () {
     const isNurse = Auth.user.role === 'nurse';
+    const isDoctor = Auth.user.role === 'doctor';
     const subEl = document.querySelector('.brand-sub');
     const titleEl = document.querySelector('.sidebar-menu-title');
     const navEl = document.querySelector('.sidebar-nav');
 
-    if (subEl) subEl.textContent = isNurse ? 'NURSE BEDSIDE CIS' : 'MedTech Solution';
-    if (titleEl) titleEl.textContent = isNurse ? 'NURSING SHIFT MENU' : 'Main Menu';
+    if (subEl) subEl.textContent = isDoctor ? 'PHYSICIAN CIS' : (isNurse ? 'NURSE BEDSIDE CIS' : 'MedTech Solution');
+    if (titleEl) titleEl.textContent = isDoctor ? 'CLINICAL DOCTOR MENU' : (isNurse ? 'NURSING SHIFT MENU' : 'Main Menu');
 
     if (!navEl) return;
 
-    if (isNurse) {
+    if (isDoctor) {
+      navEl.innerHTML = `
+        <div class="nav-item ${this.currentNav === 'dashboard' ? 'active' : ''}" onclick="App.setNav('dashboard', this)" title="Doctor Hub">
+          <span class="nav-icon">${Icons.svg('stethoscope', 18)}</span>
+          <span class="nav-label">Doctor Clinical Hub</span>
+        </div>
+        <div class="nav-item ${this.currentNav === 'patients' ? 'active' : ''}" onclick="App.setNav('patients', this)" title="My Active Patients">
+          <span class="nav-icon">${Icons.svg('users', 18)}</span>
+          <span class="nav-label">My Active Patients</span>
+        </div>
+        <div class="nav-item ${this.currentNav === 'lab' ? 'active' : ''}" onclick="App.setNav('lab', this)" title="Lab & Diagnostics">
+          <span class="nav-icon">${Icons.svg('fileText', 18)}</span>
+          <span class="nav-label">Lab Diagnostics</span>
+        </div>
+        <div class="nav-item ${this.currentNav === 'pharmacy' ? 'active' : ''}" onclick="App.setNav('pharmacy', this)" title="Rx Medication Orders">
+          <span class="nav-icon">${Icons.svg('revenue', 18)}</span>
+          <span class="nav-label">Rx Prescriptions</span>
+        </div>
+        <div class="nav-item ${this.currentNav === 'beds' ? 'active' : ''}" onclick="App.setNav('beds', this)" title="Ward Rounds & Beds">
+          <span class="nav-icon">${Icons.svg('bed', 18)}</span>
+          <span class="nav-label">Inpatient Ward Rounds</span>
+        </div>
+        <div class="nav-item" onclick="Auth.logout()" title="Logout Session" style="margin-top:10px; color:var(--danger)">
+          <span class="nav-icon">${Icons.svg('lock', 18, 'var(--danger)')}</span>
+          <span class="nav-label">Logout Session</span>
+        </div>
+      `;
+    } else if (isNurse) {
       navEl.innerHTML = `
         <div class="nav-item ${this.currentNav === 'dashboard' ? 'active' : ''}" onclick="App.setNav('dashboard', this)" title="Nurse Workspace">
           <span class="nav-icon">${Icons.svg('activity', 18)}</span>
@@ -94,19 +122,24 @@ const App = {
     if (!userCard) return;
 
     const isNurse = user.role === 'nurse';
+    const isDoctor = user.role === 'doctor';
+    const bgGradient = isDoctor ? 'linear-gradient(135deg, #0288D1, #00A896)' : (isNurse ? 'linear-gradient(135deg, #00A896, #0288D1)' : '');
+
     userCard.innerHTML = `
       <div class="user-info">
-        <div class="user-avatar-box" style="background:${isNurse ? 'linear-gradient(135deg, #00A896, #0288D1)' : ''}">${user.avatar || 'AU'}</div>
+        <div class="user-avatar-box" style="background:${bgGradient}">${user.avatar || 'AU'}</div>
         <div class="user-text-wrap">
           <div style="font-weight:800; font-size:0.84rem; color:var(--text-dark);">${user.name}</div>
-          <div style="font-size:0.7rem; color:${isNurse ? 'var(--primary-teal)' : 'var(--text-muted)'}; font-weight:700;">${Auth.roleLabel(user.role)}${user.ward ? ` (${user.ward})` : ''}</div>
+          <div style="font-size:0.7rem; color:${isDoctor ? 'var(--primary-blue)' : (isNurse ? 'var(--primary-teal)' : 'var(--text-muted)')}; font-weight:700;">${Auth.roleLabel(user.role)}</div>
         </div>
       </div>
-      <div style="display:flex; gap:6px; align-items:center;">
-        <button class="btn-glass" style="padding:4px 8px; font-size:0.7rem; color:${isNurse ? 'var(--primary-blue)' : 'var(--primary-teal)'};" onclick="App.switchRole('${isNurse ? 'admin' : 'nurse'}')" title="Click to test role toggle">
-          ${isNurse ? 'Admin View' : 'Nurse View'}
-        </button>
-        <button class="btn-glass" style="padding:4px 8px; font-size:0.7rem; color:var(--danger);" onclick="Auth.logout()" title="Logout">
+      <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">
+        <select onchange="App.switchRole(this.value)" style="padding:3px 6px; font-size:0.68rem; font-weight:700; border-radius:6px; border:1px solid #CBD5E1; background:#FFF; outline:none; cursor:pointer;">
+          <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin View</option>
+          <option value="doctor" ${user.role === 'doctor' ? 'selected' : ''}>Doctor View</option>
+          <option value="nurse" ${user.role === 'nurse' ? 'selected' : ''}>Nurse View</option>
+        </select>
+        <button class="btn-glass" style="padding:2px 8px; font-size:0.68rem; color:var(--danger);" onclick="Auth.logout()" title="Logout">
           Logout
         </button>
       </div>
@@ -114,7 +147,12 @@ const App = {
   },
 
   switchRole (roleKey) {
-    if (roleKey === 'nurse') {
+    if (roleKey === 'doctor') {
+      const docUser = DB.users.find(u => u.role === 'doctor') || DB.users[2];
+      Auth._user = docUser;
+      localStorage.setItem('st_user', JSON.stringify(docUser));
+      this.toast('Switched to Doctor UI/UX — Dr. April Sunshine Pelias (OB-GYN)', 'success');
+    } else if (roleKey === 'nurse') {
       const nurseUser = DB.users.find(u => u.role === 'nurse') || DB.users[4];
       Auth._user = nurseUser;
       localStorage.setItem('st_user', JSON.stringify(nurseUser));
@@ -128,9 +166,9 @@ const App = {
     this.init();
   },
 
-  getNursePatients () {
-    if (Auth.user.role === 'nurse') {
-      // Return patients assigned to Nurse Maria Santos (Station A Ward 2001)
+  getRolePatients () {
+    const user = Auth.user;
+    if (user.role === 'doctor' || user.role === 'nurse') {
       return DB.patients.filter(p => p.id === 'IP26-001883' || p.id === '0000350' || p.id === 'P-2024-001' || p.id === '0000450');
     }
     return DB.patients;
@@ -189,7 +227,8 @@ const App = {
     if (!mainView) return;
 
     const isNurse = Auth.user.role === 'nurse';
-    const nursePatients = this.getNursePatients();
+    const isDoctor = Auth.user.role === 'doctor';
+    const rolePatients = this.getRolePatients();
 
     // Re-render Main Workspace Canvas
     mainView.innerHTML = `
@@ -198,16 +237,16 @@ const App = {
         <div class="erp-topbar-left">
           <div class="search-box">
             <span class="search-box-icon" id="sb-icon"></span>
-            <input placeholder="${isNurse ? 'Search assigned patient, ID...' : 'Search patient, ID...'}" oninput="App.filterPatients(this.value)">
+            <input placeholder="${(isDoctor || isNurse) ? 'Search assigned patient, ID...' : 'Search patient, ID...'}" oninput="App.filterPatients(this.value)">
           </div>
 
           <select class="select-filter">
-            <option>${isNurse ? 'My Assigned Inpatients' : 'All Patients'}</option>
+            <option>${isDoctor ? 'My Attending Patients' : (isNurse ? 'My Assigned Inpatients' : 'All Patients')}</option>
             <option>Admitted Only</option>
             <option>Discharged</option>
           </select>
           <select class="select-filter">
-            <option>${isNurse ? 'Ward 2001 (Station A)' : 'Healthcare'}</option>
+            <option>${isDoctor ? 'OB-GYN / Medicine' : (isNurse ? 'Ward 2001 (Station A)' : 'Healthcare')}</option>
             <option>Emergency Care</option>
             <option>Internal Medicine</option>
             <option>Surgery</option>
@@ -215,12 +254,17 @@ const App = {
         </div>
 
         <div class="erp-topbar-right">
-          ${isNurse ? `
+          ${isDoctor ? `
+            <span style="font-size:0.78rem; font-weight:700; background:#E0F2FE; color:#0288D1; padding:6px 12px; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
+              <span>${Icons.svg('stethoscope', 15, '#0288D1')}</span>
+              <span>Attending: Dr. April Sunshine Pelias</span>
+            </span>
+          ` : (isNurse ? `
             <span style="font-size:0.78rem; font-weight:700; background:#E0F2FE; color:#0288D1; padding:6px 12px; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
               <span>${Icons.svg('activity', 15, '#0288D1')}</span>
               <span>Duty Shift: RN Maria Santos (Ward 2001)</span>
             </span>
-          ` : ''}
+          ` : '')}
           <button class="btn-teal" onclick="App.openIntakeWizardModal()">
             <span id="btn-plus-icon"></span> + New Patient Card
           </button>
@@ -228,32 +272,70 @@ const App = {
             <span id="btn-issue-icon"></span> New Issue
           </button>
 
-          <div style="width:38px; height:38px; border-radius:10px; background:#FFFFFF; border:1px solid #CBD5E1; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="App.toast('${isNurse ? '2 Pending Vitals Checks' : '0 New Notifications'}','info')" id="bell-wrap"></div>
+          <div style="width:38px; height:38px; border-radius:10px; background:#FFFFFF; border:1px solid #CBD5E1; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="App.toast('${isDoctor ? '2 Pending Pathology Reports' : (isNurse ? '2 Pending Vitals Checks' : '0 New Notifications')}','info')" id="bell-wrap"></div>
         </div>
       </div>
 
-      ${isNurse ? `
+      ${isDoctor ? `
+        <!-- Doctor Workspace Welcome Banner -->
+        <div style="padding:14px 18px; background:linear-gradient(135deg, #E0F2FE, #F0FDF4); border:1px solid #7DD3FC; border-radius:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg, #0288D1, #00A896); color:#FFF; font-weight:800; font-size:1.1rem; display:flex; align-items:center; justify-content:center;">AP</div>
+            <div>
+              <div style="font-weight:800; font-size:0.95rem; color:var(--text-dark);">Physician Clinical Consultation Hub — Dr. April Sunshine L. Pelias</div>
+              <div style="font-size:0.78rem; color:var(--text-secondary);">Attending OB-GYN & Internal Medicine Specialist · Displaying <strong>${rolePatients.length} Active Inpatients</strong> under your care</div>
+            </div>
+          </div>
+          <button class="btn-teal" style="padding:6px 12px; font-size:0.78rem;" onclick="App.openDoctorOrderModal('${rolePatients[0]?.id || 'IP26-001883'}')">
+            ${Icons.svg('fileText', 15)} Write Prescription / Order Lab
+          </button>
+        </div>
+      ` : (isNurse ? `
         <!-- Nurse Workspace Welcome Banner -->
         <div style="padding:14px 18px; background:linear-gradient(135deg, #F0FDF4, #E0F2FE); border:1px solid #86EFAC; border-radius:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
           <div style="display:flex; align-items:center; gap:12px;">
             <div style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg, #00A896, #0288D1); color:#FFF; font-weight:800; font-size:1.1rem; display:flex; align-items:center; justify-content:center;">MS</div>
             <div>
               <div style="font-weight:800; font-size:0.95rem; color:var(--text-dark);">Nurse Bedside Clinical Workspace — Station A (Ward 2001)</div>
-              <div style="font-size:0.78rem; color:var(--text-secondary);">Logged in as <strong>RN Maria Santos</strong> · Displaying <strong>${nursePatients.length} Inpatients</strong> assigned under your care</div>
+              <div style="font-size:0.78rem; color:var(--text-secondary);">Logged in as <strong>RN Maria Santos</strong> · Displaying <strong>${rolePatients.length} Inpatients</strong> assigned under your care</div>
             </div>
           </div>
-          <button class="btn-teal" style="padding:6px 12px; font-size:0.78rem;" onclick="App.openLogVitalsModal('${nursePatients[0]?.id || 'IP26-001883'}')">
+          <button class="btn-teal" style="padding:6px 12px; font-size:0.78rem;" onclick="App.openLogVitalsModal('${rolePatients[0]?.id || 'IP26-001883'}')">
             ${Icons.svg('activity', 15)} Log Bedside Vitals
           </button>
         </div>
-      ` : ''}
+      ` : '')}
 
       <!-- Top Metrics Bar (Role Tailored) -->
       <div class="top-metrics-bar">
-        ${isNurse ? `
+        ${isDoctor ? `
+          <div class="top-metric-card" style="border-left:4px solid var(--primary-blue);">
+            <div class="tm-label">My Active Patients</div>
+            <div class="tm-value" style="color:var(--primary-blue)">${rolePatients.length} Patients</div>
+            <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Primary Attending Doctor</div>
+          </div>
+
+          <div class="top-metric-card" style="border-left:4px solid var(--primary-teal);">
+            <div class="tm-label">Pending Diagnostics</div>
+            <div class="tm-value" style="color:var(--primary-teal)">2 Reports</div>
+            <div style="font-size:0.72rem; color:var(--success); font-weight:700; margin-top:2px;">Ultrasound & Pathology</div>
+          </div>
+
+          <div class="top-metric-card" style="border-left:4px solid var(--warning);">
+            <div class="tm-label">Active Rx Orders</div>
+            <div class="tm-value" style="color:var(--warning)">6 Orders</div>
+            <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Gestox, Tranexamic Acid</div>
+          </div>
+
+          <div class="top-metric-card" style="border-left:4px solid var(--danger);">
+            <div class="tm-label">Critical Consults</div>
+            <div class="tm-value" style="color:var(--danger)">1 Urgent</div>
+            <div style="font-size:0.72rem; color:var(--danger); font-weight:700; margin-top:2px;">Threatened Abortion (15w)</div>
+          </div>
+        ` : (isNurse ? `
           <div class="top-metric-card" style="border-left:4px solid var(--primary-teal);">
             <div class="tm-label">Assigned Inpatients</div>
-            <div class="tm-value" style="color:var(--primary-teal)">${nursePatients.length} Patients</div>
+            <div class="tm-value" style="color:var(--primary-teal)">${rolePatients.length} Patients</div>
             <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Station A Ward 2001</div>
           </div>
 
@@ -304,18 +386,18 @@ const App = {
             <div class="tm-value" style="color:var(--danger)">₱1,337,000.00</div>
             <div style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">Financial Accounts</div>
           </div>
-        `}
+        `)}
       </div>
 
       <!-- Analytics Grid -->
       <div class="analytics-grid" style="grid-template-columns: 2.2fr 1.3fr 1.2fr;">
         
-        <!-- Panel 1: Admissions Trend / Nurse Rounds -->
+        <!-- Panel 1: Admissions Trend / Nurse Rounds / Doctor Consults -->
         <div class="analytics-card">
           <div class="analytics-hdr">
-            <h3>${isNurse ? 'NURSE BEDSIDE ROUNDS & VITAL SIGNS TREND' : 'PATIENT ADMISSIONS TREND'}</h3>
+            <h3>${isDoctor ? 'DOCTOR CLINICAL CONSULTATIONS & TREND' : (isNurse ? 'NURSE BEDSIDE ROUNDS & VITAL SIGNS TREND' : 'PATIENT ADMISSIONS TREND')}</h3>
             <select class="select-filter" style="padding:4px 10px; font-size:0.75rem;">
-              <option>${isNurse ? 'Ward 2001 Inpatients' : 'Patient admissions'}</option>
+              <option>${(isDoctor || isNurse) ? 'My Patients' : 'Patient admissions'}</option>
             </select>
           </div>
           <div id="admissions-chart-wrap"></div>
@@ -324,7 +406,7 @@ const App = {
         <!-- Panel 2: BED CAPACITY & STATUS -->
         <div class="analytics-card" style="cursor:pointer;" onclick="App.setNav('beds')">
           <div class="analytics-hdr">
-            <h3>${isNurse ? 'WARD 2001 BED CAPACITY' : 'BED CAPACITY & STATUS'}</h3>
+            <h3>${isDoctor ? 'INPATIENT WARD BEDS' : (isNurse ? 'WARD 2001 BED CAPACITY' : 'BED CAPACITY & STATUS')}</h3>
             <span id="bed-hdr-icon" style="color:var(--primary-teal); cursor:pointer;"></span>
           </div>
           
@@ -335,21 +417,21 @@ const App = {
               <span style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-dark);">
                 <span style="width:10px; height:10px; border-radius:50%; background:#94A3B8;"></span> Total Capacity
               </span>
-              <strong style="font-size:0.9rem;">${isNurse ? '37 Beds' : '226 Beds'}</strong>
+              <strong style="font-size:0.9rem;">${(isDoctor || isNurse) ? '37 Beds' : '226 Beds'}</strong>
             </div>
 
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <span style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-dark);">
                 <span style="width:10px; height:10px; border-radius:50%; background:#16A34A;"></span> Occupied Beds
               </span>
-              <strong style="color:#16A34A; font-size:0.9rem;">${isNurse ? '35 Beds' : '166 Beds'}</strong>
+              <strong style="color:#16A34A; font-size:0.9rem;">${(isDoctor || isNurse) ? '35 Beds' : '166 Beds'}</strong>
             </div>
 
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <span style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-dark);">
                 <span style="width:10px; height:10px; border-radius:50%; background:#00BCD4;"></span> Available Beds
               </span>
-              <strong style="color:#00BCD4; font-size:0.9rem;">${isNurse ? '2 Beds' : '60 Beds'}</strong>
+              <strong style="color:#00BCD4; font-size:0.9rem;">${(isDoctor || isNurse) ? '2 Beds' : '60 Beds'}</strong>
             </div>
           </div>
         </div>
@@ -357,9 +439,20 @@ const App = {
         <!-- Panel 3: Billing / Care Team Roster -->
         <div class="analytics-card">
           <div class="analytics-hdr">
-            <h3>${isNurse ? 'ATTENDING DOCTORS' : 'BILLING SUMMARY'}</h3>
+            <h3>${isDoctor ? 'CLINICAL DUTY HOURS' : (isNurse ? 'ATTENDING DOCTORS' : 'BILLING SUMMARY')}</h3>
           </div>
-          ${isNurse ? `
+          ${isDoctor ? `
+            <div style="display:flex; flex-direction:column; gap:10px; font-size:0.82rem; margin-top:10px;">
+              <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:10px; border-radius:8px;">
+                <div style="font-weight:700; color:var(--text-dark);">Mon - Fri (08:00 AM - 04:00 PM)</div>
+                <div style="font-size:0.74rem; color:var(--primary-teal);">OB-GYN & Medicine Consultations</div>
+              </div>
+              <div style="background:#F0FDF4; border:1px solid #86EFAC; padding:10px; border-radius:8px;">
+                <div style="font-weight:700; color:#166534;">On-Call Duty Active</div>
+                <div style="font-size:0.74rem; color:#15803D;">Emergency OB-GYN Surgery Prep</div>
+              </div>
+            </div>
+          ` : (isNurse ? `
             <div style="display:flex; flex-direction:column; gap:12px; font-size:0.82rem; margin-top:10px;">
               <div style="display:flex; align-items:center; gap:10px; padding-bottom:8px; border-bottom:1px solid #E2E8F0;">
                 <div style="width:36px; height:36px; border-radius:50%; background:#0288D1; color:#FFF; font-weight:800; display:flex; align-items:center; justify-content:center;">AP</div>
@@ -386,7 +479,7 @@ const App = {
                 <div style="width:75%; height:100%; background:var(--primary-teal); border-radius:3px;"></div>
               </div>
             </div>
-          `}
+          `)}
         </div>
 
       </div>
@@ -395,8 +488,8 @@ const App = {
       <div class="erp-table-card">
         <div class="table-hdr">
           <h3 style="display:flex; align-items:center; gap:8px;">
-            <span>${isNurse ? 'MY ASSIGNED INPATIENT ROSTER (WARD 2001)' : 'RECENT PATIENT LIST'}</span>
-            ${isNurse ? `<span style="font-size:0.7rem; font-weight:700; background:#F0FDF4; color:#166534; border:1px solid #86EFAC; padding:2px 8px; border-radius:6px;">🔒 RN Maria Santos Patients</span>` : ''}
+            <span>${isDoctor ? 'MY ATTENDING INPATIENT ROSTER (DR. APRIL SUNSHINE PELIAS)' : (isNurse ? 'MY ASSIGNED INPATIENT ROSTER (WARD 2001)' : 'RECENT PATIENT LIST')}</span>
+            ${isDoctor ? `<span style="font-size:0.7rem; font-weight:700; background:#E0F2FE; color:#0288D1; border:1px solid #7DD3FC; padding:2px 8px; border-radius:6px;">🩺 Dr. April Sunshine Pelias Inpatients</span>` : (isNurse ? `<span style="font-size:0.7rem; font-weight:700; background:#F0FDF4; color:#166534; border:1px solid #86EFAC; padding:2px 8px; border-radius:6px;">🔒 RN Maria Santos Patients</span>` : '')}
           </h3>
           <button class="btn-teal" style="padding:6px 14px; font-size:0.78rem;" onclick="App.openIntakeWizardModal()">+ Add Patient</button>
         </div>
@@ -414,7 +507,7 @@ const App = {
               </tr>
             </thead>
             <tbody id="recent-patients-tbody">
-              ${this._renderPatientRows(nursePatients)}
+              ${this._renderPatientRows(rolePatients)}
             </tbody>
           </table>
         </div>
@@ -423,7 +516,7 @@ const App = {
 
     // Re-inject vector icons and charts
     setTimeout(() => {
-      if (!isNurse && document.getElementById('tm-opd-icon')) {
+      if (!isNurse && !isDoctor && document.getElementById('tm-opd-icon')) {
         document.getElementById('tm-opd-icon').innerHTML  = Icons.svg('users', 16, 'var(--primary-teal)');
         document.getElementById('tm-rev-icon').innerHTML  = Icons.svg('trendingUp', 12, '#166534');
         document.getElementById('opd-sparkline-wrap').innerHTML   = Charts.opdSparkline();
@@ -436,14 +529,16 @@ const App = {
       if (document.getElementById('btn-issue-icon'))document.getElementById('btn-issue-icon').innerHTML= Icons.svg('calendar', 16, '#475569');
       if (document.getElementById('bell-wrap'))     document.getElementById('bell-wrap').innerHTML    = Icons.svg('bell', 18, '#475569');
 
-      if (document.getElementById('bed-donut-wrap'))      document.getElementById('bed-donut-wrap').innerHTML      = Charts.bedStatusDonut(isNurse ? 35 : 166, isNurse ? 2 : 60);
+      if (document.getElementById('bed-donut-wrap'))      document.getElementById('bed-donut-wrap').innerHTML      = Charts.bedStatusDonut((isDoctor || isNurse) ? 35 : 166, (isDoctor || isNurse) ? 2 : 60);
       if (document.getElementById('admissions-chart-wrap')) document.getElementById('admissions-chart-wrap').innerHTML = Charts.admissionsTrend();
     }, 10);
   },
 
   _renderPatientRows (list) {
     const isNurse = Auth.user.role === 'nurse';
-    const patientList = isNurse ? this.getNursePatients() : list;
+    const isDoctor = Auth.user.role === 'doctor';
+    const patientList = (isDoctor || isNurse) ? this.getRolePatients() : list;
+
     if (!patientList.length) return `<tr><td colspan="6" class="text-center p-4 text-muted">No patient records match query.</td></tr>`;
     return patientList.map(p => `
       <tr ondblclick="App.promptSecurityCheck('${p.id}')" title="Double click to open full patient record">
@@ -462,11 +557,15 @@ const App = {
         <td style="font-size:0.8rem; color:var(--text-muted);">${p.registeredDate}</td>
         <td>
           <div style="display:flex; gap:6px;">
-            ${isNurse ? `
+            ${isDoctor ? `
+              <button class="btn-teal" style="padding:4px 10px; font-size:0.75rem;" onclick="event.stopPropagation(); App.openDoctorOrderModal('${p.id}')">
+                ${Icons.svg('fileText', 13)} Write Rx / Order
+              </button>
+            ` : (isNurse ? `
               <button class="btn-teal" style="padding:4px 10px; font-size:0.75rem;" onclick="event.stopPropagation(); App.openLogVitalsModal('${p.id}')">
                 ${Icons.svg('activity', 13)} Log Vitals
               </button>
-            ` : ''}
+            ` : '')}
             <button class="btn-glass" style="padding:4px 10px; font-size:0.75rem;" onclick="App.promptSecurityCheck('${p.id}')">
               ${Icons.svg('lock', 13)} Open EHR
             </button>
@@ -474,6 +573,65 @@ const App = {
         </td>
       </tr>
     `).join('');
+  },
+
+  /* ── Doctor Quick Action Modal: Write Rx / Order Diagnostics ──── */
+  openDoctorOrderModal (pid) {
+    const p = DH.getPatient(pid) || DB.patients[0];
+    App.modal(`
+      ${App.modalHeader(`Physician Orders & Prescriptions: ${p.firstName} ${p.lastName} (${p.id})`, 'stethoscope')}
+      <div class="modal-body" style="padding:18px 22px;">
+        <form onsubmit="App.saveDoctorOrder(event, '${p.id}')">
+          <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:12px 14px; margin-bottom:14px; display:flex; justify-content:space-between; font-size:0.84rem;">
+            <span><strong>Patient:</strong> ${p.firstName} ${p.lastName}</span>
+            <span><strong>Attending Doctor:</strong> Dr. April Sunshine Pelias</span>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <label class="form-label">Order Type *</label>
+            <select class="form-control-select" id="do-type" required>
+              <option value="Rx Prescription">Rx Prescription (Formulary Drug)</option>
+              <option value="Diagnostic Lab">Diagnostic Requisition (Lab / Ultrasound)</option>
+              <option value="Clinical Progress Note">Clinical Progress Note</option>
+            </select>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <label class="form-label">Order Details / Prescription *</label>
+            <input class="form-control-input" id="do-details" required value="Isoxsuprine HCl 10mg Tab (Gestox) — 1 Tab TID" placeholder="e.g. Complete Blood Count (CBC) & Serum Electrolytes">
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label class="form-label">Physician Clinical Instructions</label>
+            <input class="form-control-input" id="do-notes" value="Monitor vitals q4h. Administer IV fluids D5LR 1000mL at 30 gtts/min." placeholder="Special instructions for nursing staff">
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px; padding-top:14px; border-top:1px solid #E2E8F0;">
+            <button type="button" class="btn-glass" onclick="App.closeModal()">Cancel</button>
+            <button type="submit" class="btn-teal">
+              ${Icons.svg('check', 16)} Submit Physician Order
+            </button>
+          </div>
+        </form>
+      </div>
+    `, 'modal-md');
+  },
+
+  saveDoctorOrder (e, pid) {
+    e.preventDefault();
+    const p = DH.getPatient(pid);
+    const type = document.getElementById('do-type').value;
+    const details = document.getElementById('do-details').value;
+
+    this.closeModal();
+    this.toast(`Physician order submitted for ${p.firstName} ${p.lastName}! (${type}: ${details})`, 'success');
+
+    if (this.currentNav === 'patients') {
+      const mainView = document.getElementById('main-view');
+      if (mainView) PatientsModule.render(mainView);
+    } else {
+      this.renderDashboard();
+    }
   },
 
   filterPatients (q) {
