@@ -864,14 +864,14 @@ const App = {
             <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:3px; font-weight:600;">Department: ${p.department || 'Medicine'}</div>
           </div>
 
-          <!-- Column 3: Blood Type & Allergies -->
+          <!-- Column 3: Blood Type, Religion & Allergies -->
           <div style="padding-right:16px; border-right:1px solid #E2E8F0;">
-            <div style="font-size:0.68rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Blood Type & Allergies</div>
+            <div style="font-size:0.68rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Blood Type & Faith</div>
             <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
               <span style="background:#EF4444; color:#FFF; font-weight:800; font-size:0.75rem; padding:2px 8px; border-radius:6px;">${p.bloodType}</span>
-              <span style="font-size:0.8rem; font-weight:700; color:var(--danger);">${p.allergies}</span>
+              <span style="font-size:0.8rem; font-weight:700; color:var(--primary-teal);">${p.religion || 'Roman Catholic'}</span>
             </div>
-            <div style="font-size:0.74rem; color:var(--text-muted); margin-top:4px;">Registered: ${p.registeredDate}</div>
+            <div style="font-size:0.74rem; color:var(--text-muted); margin-top:4px;">Allergies: <strong>${p.allergies}</strong></div>
           </div>
 
           <!-- Column 4: Triage Priority -->
@@ -1041,7 +1041,7 @@ const App = {
               </div>
             </div>
 
-            <div style="display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:12px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px;">
               <div>
                 <label class="form-label">Birthdate *</label>
                 <input class="form-control-input" id="if-dob" type="date" required>
@@ -1053,6 +1053,9 @@ const App = {
                   <option value="Male">Male</option>
                 </select>
               </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
               <div>
                 <label class="form-label">Blood Type *</label>
                 <select class="form-control-select" id="if-blood" required>
@@ -1062,6 +1065,19 @@ const App = {
                   <option value="AB+">AB+</option>
                   <option value="O-">O-</option>
                   <option value="A-">A-</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Religion / Faith *</label>
+                <select class="form-control-select" id="if-religion" required>
+                  <option value="Roman Catholic">Roman Catholic</option>
+                  <option value="Christian / Protestant">Christian / Protestant</option>
+                  <option value="Islam">Islam</option>
+                  <option value="Iglesia ni Cristo">Iglesia ni Cristo</option>
+                  <option value="Seventh-day Adventist">Seventh-day Adventist</option>
+                  <option value="Jehovah's Witness">Jehovah's Witness</option>
+                  <option value="Buddhism">Buddhism</option>
+                  <option value="Other / None">Other / None</option>
                 </select>
               </div>
             </div>
@@ -1131,6 +1147,7 @@ const App = {
     const dob   = document.getElementById('if-dob').value;
     const sex   = document.getElementById('if-sex').value;
     const blood = document.getElementById('if-blood')?.value || 'O+';
+    const religion = document.getElementById('if-religion')?.value || 'Roman Catholic';
     const dept  = document.getElementById('if-dept').value;
     const complaint = document.getElementById('if-complaint').value.trim();
     const triage    = document.getElementById('if-triage').value;
@@ -1146,7 +1163,7 @@ const App = {
       department: dept, status: 'Admitted',
       registeredDate: todayStr, triageLevel: triage,
       chiefComplaint: complaint, admittingDiagnosis: complaint,
-      bloodType: blood, allergies: 'None known',
+      bloodType: blood, religion: religion, allergies: 'None known',
       philHealthNumber: `PH-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
     };
 
