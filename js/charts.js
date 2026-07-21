@@ -103,65 +103,83 @@ const Charts = {
     </div>`;
   },
 
-  /* ──────────── Patient Vital Signs Trend Graph ──────────── */
+  /* ──────────── Patient Vital Signs ECG / EKG Cardiac Telemetry Graph ──────────── */
   vitalsTrendChart () {
-    return `<svg viewBox="0 0 720 230" width="100%" height="230" style="overflow:visible;">
+    return `<svg viewBox="0 0 760 250" width="100%" height="250" style="overflow:visible; border-radius:12px; background:#FFF5F5; box-shadow:inset 0 0 0 1px #FCA5A5;">
       <defs>
-        <linearGradient id="bpGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#0288D1" stop-opacity="0.28"/>
-          <stop offset="100%" stop-color="#0288D1" stop-opacity="0.0"/>
-        </linearGradient>
-        <linearGradient id="prGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#DC2626" stop-opacity="0.20"/>
-          <stop offset="100%" stop-color="#DC2626" stop-opacity="0.0"/>
-        </linearGradient>
+        <!-- Fine 1mm ECG Sub-Grid (Pink Lines) -->
+        <pattern id="ecgMinorGrid" width="8" height="8" patternUnits="userSpaceOnUse">
+          <path d="M 8 0 L 0 0 0 8" fill="none" stroke="rgba(239, 68, 68, 0.16)" stroke-width="0.75"/>
+        </pattern>
+        <!-- Major 5mm ECG Grid (Thicker Red Lines) -->
+        <pattern id="ecgMajorGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <rect width="40" height="40" fill="url(#ecgMinorGrid)"/>
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(220, 38, 38, 0.36)" stroke-width="1.25"/>
+        </pattern>
+        <!-- Red Double Arrow Markers for R-R Interval -->
+        <marker id="arrowLeft" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 10 0 L 0 5 L 10 10 z" fill="#DC2626"/>
+        </marker>
+        <marker id="arrowRight" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#DC2626"/>
+        </marker>
       </defs>
 
-      <!-- Y Grid Lines -->
-      <line x1="40" y1="30" x2="700" y2="30" stroke="#E2E8F0" stroke-dasharray="4 4"/>
-      <text x="20" y="34" font-size="10" fill="#94A3B8">140</text>
+      <!-- Authentic ECG Pink/Red Grid Paper Background -->
+      <rect width="760" height="250" fill="url(#ecgMajorGrid)"/>
 
-      <line x1="40" y1="75" x2="700" y2="75" stroke="#E2E8F0" stroke-dasharray="4 4"/>
-      <text x="20" y="79" font-size="10" fill="#94A3B8">120</text>
+      <!-- Continuous P-QRS-T Cardiac ECG Telemetry Waveform -->
+      <path d="
+        M 0 140 h 16
+        c 4 -6, 12 -6, 16 0 h 8
+        l 4 8 l 6 -88 l 6 100 l 4 -20 h 12
+        c 8 -16, 20 -16, 28 0 h 18
 
-      <line x1="40" y1="120" x2="700" y2="120" stroke="#E2E8F0" stroke-dasharray="4 4"/>
-      <text x="20" y="124" font-size="10" fill="#94A3B8">100</text>
+        c 4 -6, 12 -6, 16 0 h 8
+        l 4 8 l 6 -88 l 6 100 l 4 -20 h 12
+        c 8 -16, 20 -16, 28 0 h 18
 
-      <line x1="40" y1="165" x2="700" y2="165" stroke="#E2E8F0" stroke-dasharray="4 4"/>
-      <text x="20" y="169" font-size="10" fill="#94A3B8">80</text>
+        c 4 -6, 12 -6, 16 0 h 8
+        l 4 8 l 6 -88 l 6 100 l 4 -20 h 12
+        c 8 -16, 20 -16, 28 0 h 18
 
-      <line x1="40" y1="200" x2="700" y2="200" stroke="#CBD5E1"/>
-      <text x="20" y="204" font-size="10" fill="#94A3B8">60</text>
+        c 4 -6, 12 -6, 16 0 h 8
+        l 4 8 l 6 -88 l 6 100 l 4 -20 h 12
+        c 8 -16, 20 -16, 28 0 h 18
 
-      <!-- Time Checkpoints -->
-      <text x="60" y="220" font-size="11" fill="#64748B" font-weight="600">08:00 AM</text>
-      <text x="210" y="220" font-size="11" fill="#64748B" font-weight="600">12:00 PM</text>
-      <text x="360" y="220" font-size="11" fill="#64748B" font-weight="600">04:00 PM</text>
-      <text x="510" y="220" font-size="11" fill="#64748B" font-weight="600">08:00 PM</text>
-      <text x="660" y="220" font-size="11" fill="#64748B" font-weight="600">10:30 PM</text>
+        c 4 -6, 12 -6, 16 0 h 8
+        l 4 8 l 6 -88 l 6 100 l 4 -20 h 12
+        c 8 -16, 20 -16, 28 0 h 18
 
-      <!-- BP Systolic Curve (Blue Line) -->
-      <path d="M 60 75 Q 210 65, 360 85 T 510 70 T 660 75 L 660 200 L 60 200 Z" fill="url(#bpGrad)"/>
-      <path d="M 60 75 Q 210 65, 360 85 T 510 70 T 660 75" fill="none" stroke="#0288D1" stroke-width="3.5" stroke-linecap="round"/>
+        c 4 -6, 12 -6, 16 0 h 8
+        l 4 8 l 6 -88 l 6 100 l 4 -20 h 12
+        c 8 -16, 20 -16, 28 0 h 20
+      " fill="none" stroke="#111827" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
 
-      <!-- Pulse Rate Curve (Red Line) -->
-      <path d="M 60 145 Q 210 135, 360 140 T 510 130 T 660 138 L 660 200 L 60 200 Z" fill="url(#prGrad)"/>
-      <path d="M 60 145 Q 210 135, 360 140 T 510 130 T 660 138" fill="none" stroke="#DC2626" stroke-width="3" stroke-dasharray="6 3" stroke-linecap="round"/>
+      <!-- R-R Interval Measurement Marker Arrow (matching reference image) -->
+      <line x1="56" y1="62" x2="186" y2="62" stroke="#DC2626" stroke-width="3.5" marker-start="url(#arrowLeft)" marker-end="url(#arrowRight)"/>
 
-      <!-- Oxygen SpO2 Curve (Teal Line) -->
-      <path d="M 60 35 Q 210 32, 360 38 T 510 33 T 660 35" fill="none" stroke="#00A896" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- R-R Interval Callout Box -->
+      <g transform="translate(121, 14)">
+        <rect x="-56" y="0" width="112" height="36" rx="5" fill="#0F172A" stroke="#334155" stroke-width="1"/>
+        <text x="0" y="15" fill="#FFFFFF" font-size="10" font-weight="800" text-anchor="middle" font-family="Inter, sans-serif">R-R Interval</text>
+        <text x="0" y="28" fill="#94A3B8" font-size="9" font-weight="600" text-anchor="middle" font-family="Inter, sans-serif">4 large squares (0.71s)</text>
+      </g>
 
-      <!-- Data Nodes -->
-      <circle cx="60" cy="75" r="4.5" fill="#0288D1" stroke="#FFF" stroke-width="2"/>
-      <circle cx="210" cy="65" r="4.5" fill="#0288D1" stroke="#FFF" stroke-width="2"/>
-      <circle cx="360" cy="85" r="4.5" fill="#0288D1" stroke="#FFF" stroke-width="2"/>
-      <circle cx="510" cy="70" r="4.5" fill="#0288D1" stroke="#FFF" stroke-width="2"/>
-      <circle cx="660" cy="75" r="4.5" fill="#0288D1" stroke="#FFF" stroke-width="2"/>
+      <!-- Telemetry Live Parameter Badges (Top Left & Top Right) -->
+      <g transform="translate(14, 14)">
+        <rect x="0" y="0" width="160" height="24" rx="5" fill="#000000" opacity="0.85"/>
+        <text x="10" y="16" fill="#00A896" font-size="10" font-weight="800" font-family="monospace">LEAD II · 25mm/s · 10mm/mV</text>
+      </g>
 
-      <!-- Active Point Tooltip on latest vitals -->
-      <circle cx="660" cy="75" r="6" fill="#0288D1" stroke="#FFF" stroke-width="3"/>
-      <rect x="580" y="42" width="110" height="24" rx="5" fill="#0F172A"/>
-      <text x="635" y="58" font-size="11" fill="#FFF" text-anchor="middle" font-weight="700">110/70 mmHg (84 bpm)</text>
+      <!-- Bottom ECG Heart Rate Calculation Formula Bar -->
+      <g transform="translate(0, 222)">
+        <rect width="760" height="28" fill="#0F172A"/>
+        <text x="16" y="18" fill="#F8FAFC" font-size="10" font-weight="700" font-family="Inter, sans-serif">
+          Heart Rate Calculation: 300 ÷ (4 large squares in R-R interval) = <tspan fill="#4ADE80" font-weight="800">84 bpm</tspan> · <tspan fill="#38BDF8">Normal Sinus Rhythm</tspan>
+        </text>
+        <text x="744" y="18" fill="#94A3B8" font-size="9" font-weight="600" text-anchor="end" font-family="monospace">Telemetry Stream Active</text>
+      </g>
     </svg>`;
   },
 };
