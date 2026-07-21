@@ -480,22 +480,22 @@ const App = {
 
       </div>
 
-      <!-- Native SVG Patient ECG Telemetry Graph -->
+      <!-- Native SVG Patient Vital Signs Trend Graph -->
       <div class="analytics-card" style="margin-bottom:20px; padding:20px;">
         <div class="analytics-hdr">
           <h3 style="display:flex; align-items:center; gap:8px;">
             <span>${Icons.svg('activity', 18, 'var(--primary-teal)')}</span>
-            <span>PATIENT CARDIAC ECG TELEMETRY STRIP</span>
+            <span>PATIENT VITAL SIGNS TREND GRAPH</span>
           </h3>
           <div style="display:flex; gap:14px; font-size:0.78rem; font-weight:700;">
-            <span style="display:flex; align-items:center; gap:6px; color:#DC2626;">
-              <span style="width:10px; height:10px; border-radius:50%; background:#DC2626;"></span> R-R Interval
+            <span style="display:flex; align-items:center; gap:6px; color:#0288D1;">
+              <span style="width:10px; height:10px; border-radius:50%; background:#0288D1;"></span> BP Systolic
             </span>
-            <span style="display:flex; align-items:center; gap:6px; color:#111827;">
-              <span style="width:10px; height:10px; border-radius:50%; background:#111827;"></span> Lead II ECG Waveform
+            <span style="display:flex; align-items:center; gap:6px; color:#DC2626;">
+              <span style="width:10px; height:10px; border-radius:50%; background:#DC2626;"></span> Pulse / Heart Rate
             </span>
             <span style="display:flex; align-items:center; gap:6px; color:#00A896;">
-              <span style="width:10px; height:10px; border-radius:50%; background:#00A896;"></span> Live Telemetry (84 bpm)
+              <span style="width:10px; height:10px; border-radius:50%; background:#00A896;"></span> SpO₂ Saturation
             </span>
           </div>
         </div>
