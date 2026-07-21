@@ -309,7 +309,7 @@ const App = {
               <div style="font-size:0.78rem; color:var(--text-secondary);">Logged in as <strong>RN Maria Santos</strong> · Displaying <strong>${rolePatients.length} Inpatients</strong> assigned under your care</div>
             </div>
           </div>
-          <button class="btn-teal" style="padding:6px 12px; font-size:0.78rem;" onclick="App.openLogVitalsModal('${rolePatients[0]?.id || 'IP26-001883'}')">
+          <button class="btn-teal" style="padding:6px 12px; font-size:0.78rem;" onclick="App.promptNurseCheck('${rolePatients[0]?.id || 'IP26-001883'}')">
             ${Icons.svg('activity', 15)} Log Bedside Vitals
           </button>
         </div>
@@ -571,7 +571,7 @@ const App = {
                 ${Icons.svg('fileText', 13)} Write Rx / Order
               </button>
             ` : (isNurse ? `
-              <button class="btn-teal" style="padding:4px 10px; font-size:0.75rem;" onclick="event.stopPropagation(); App.openLogVitalsModal('${p.id}')">
+              <button class="btn-teal" style="padding:4px 10px; font-size:0.75rem;" onclick="event.stopPropagation(); App.promptNurseCheck('${p.id}')">
                 ${Icons.svg('activity', 13)} Log Vitals
               </button>
             ` : '')}
@@ -653,17 +653,91 @@ const App = {
     if (tableBody) tableBody.innerHTML = this._renderPatientRows(list);
   },
 
-  /* ── Nurse Quick Action Modal: Log Bedside Vitals ───────────── */
-  openLogVitalsModal (pid) {
+  /* ── Nurse Quick Action Modal: Log Bedside Vitals (With Auth Check) ── */
+  promptNurseCheck (pid) {
     const p = DH.getPatient(pid) || DB.patients[0];
+    const nurses = DB.users.filter(u => u.role === 'nurse');
+    if (!nurses.length) nurses.push({ id:'U005', name:'RN Maria Santos', email:'nurse@sttherese.ph', password:'nurse123', ward:'Ward 2001' });
+
+    App.modal(`
+      ${App.modalHeader('Nurse Bedside Security Authorization Check', 'shield')}
+      <div class="modal-body" style="padding:18px 22px;">
+        <div style="background:#F0FDF4; border:1px solid #86EFAC; color:#166534; padding:14px 16px; margin-bottom:18px; border-radius:10px; display:flex; gap:12px; align-items:center;">
+          <span>${Icons.svg('activity', 22, '#166534')}</span>
+          <div style="font-size:0.82rem;">
+            <strong>Bedside Clinical Security Policy:</strong> Select and enter credentials for the assigned Registered Nurse account to record vital signs for <strong>${p.firstName} ${p.lastName} (${p.id})</strong>.
+          </div>
+        </div>
+
+        <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:12px 14px; margin-bottom:16px; font-size:0.84rem;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span style="color:var(--text-muted);">Patient Record:</span>
+            <strong style="color:var(--primary-blue);">${p.firstName} ${p.lastName} (${p.id})</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:var(--text-muted);">Assigned Care Unit:</span>
+            <strong style="color:var(--text-dark);">Station A (Ward 2001)</strong>
+          </div>
+        </div>
+
+        <form onsubmit="App.verifyNurseAuth(event, '${p.id}')">
+          <div style="margin-bottom:12px;">
+            <label class="form-label">Select Assigned Duty Nurse Account *</label>
+            <select class="form-control-select" id="nurse-auth-select" required>
+              ${nurses.map(n => `<option value="${n.id}">${n.name} (${n.email}) — ${n.ward || 'Ward 2001'}</option>`).join('')}
+            </select>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label class="form-label">Nurse Account Password *</label>
+            <input class="form-control-input" type="password" id="nurse-auth-pass" required placeholder="Enter nurse password (e.g. nurse123)">
+          </div>
+
+          <div id="nurse-auth-err" style="display:none; color:var(--danger); font-size:0.8rem; margin-bottom:12px; font-weight:700;"></div>
+
+          <div style="display:flex; justify-content:flex-end; gap:10px; padding-top:14px; border-top:1px solid #E2E8F0;">
+            <button type="button" class="btn-glass" onclick="App.closeModal()">Cancel</button>
+            <button type="submit" class="btn-teal">
+              ${Icons.svg('check', 16)} Verify Nurse & Log Vitals
+            </button>
+          </div>
+        </form>
+      </div>
+    `, 'modal-md');
+  },
+
+  verifyNurseAuth (e, pid) {
+    e.preventDefault();
+    const nurseId = document.getElementById('nurse-auth-select').value;
+    const pass = document.getElementById('nurse-auth-pass').value.trim();
+    const errEl = document.getElementById('nurse-auth-err');
+    const nurse = DB.users.find(u => u.id === nurseId) || DB.users[4];
+
+    if (nurse && pass === nurse.password) {
+      App.closeModal();
+      App.toast(`Nurse Verification Granted: ${nurse.name}`, 'success');
+      App.openLogVitalsModal(pid, nurse.name);
+    } else {
+      if (errEl) {
+        errEl.style.display = 'block';
+        errEl.textContent = '❌ Access Denied: Incorrect nurse password. (Try: nurse123)';
+      }
+      App.toast('Nurse security authentication failed.', 'error');
+    }
+  },
+
+  openLogVitalsModal (pid, verifiedNurseName) {
+    const p = DH.getPatient(pid) || DB.patients[0];
+    const nurseName = verifiedNurseName || Auth.user.name || 'RN Maria Santos';
+
     App.modal(`
       ${App.modalHeader(`Log Bedside Vitals: ${p.firstName} ${p.lastName} (${p.id})`, 'activity')}
       <div class="modal-body" style="padding:18px 22px;">
-        <form onsubmit="App.saveVitals(event, '${p.id}')">
-          <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:12px 14px; margin-bottom:14px; display:flex; justify-content:space-between; font-size:0.84rem;">
+        <form onsubmit="App.saveVitals(event, '${p.id}', '${nurseName}')">
+          <div style="background:#F0FDF4; border:1px solid #86EFAC; border-radius:10px; padding:12px 14px; margin-bottom:14px; display:flex; justify-content:space-between; font-size:0.84rem;">
             <span><strong>Patient:</strong> ${p.firstName} ${p.lastName}</span>
             <span><strong>Unit:</strong> Station A Ward 2001</span>
-            <span><strong>Nurse:</strong> RN Maria Santos</span>
+            <span><strong>Verified Nurse:</strong> ${nurseName}</span>
           </div>
 
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
@@ -703,7 +777,7 @@ const App = {
     `, 'modal-md');
   },
 
-  saveVitals (e, pid) {
+  saveVitals (e, pid, nurseName) {
     e.preventDefault();
     const p = DH.getPatient(pid);
     const bp = document.getElementById('nv-bp').value;
@@ -717,7 +791,8 @@ const App = {
       id: DH.nextId('V'),
       patientId: pid,
       timestamp: DH.now(),
-      bp, pr: Number(pr), rr: 18, temp: Number(temp), spo2: Number(spo2), pain: Number(pain)
+      bp, pr: Number(pr), rr: 18, temp: Number(temp), spo2: Number(spo2), pain: Number(pain),
+      loggedBy: nurseName || 'RN Maria Santos'
     };
 
     if (existingIndex >= 0) {
@@ -727,7 +802,7 @@ const App = {
     }
 
     this.closeModal();
-    this.toast(`Vitals recorded for ${p.firstName} ${p.lastName}! (BP: ${bp}, HR: ${pr} bpm, SpO₂: ${spo2}%)`, 'success');
+    this.toast(`Vitals recorded by ${nurseName || 'RN Maria Santos'} for ${p.firstName} ${p.lastName}! (BP: ${bp}, HR: ${pr} bpm, SpO₂: ${spo2}%)`, 'success');
 
     if (this.currentNav === 'patients') {
       const mainView = document.getElementById('main-view');

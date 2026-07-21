@@ -119,7 +119,7 @@ const PatientsModule = {
                 ${Icons.svg('fileText', 13)} Write Rx / Order
               </button>
             ` : (isNurse ? `
-              <button class="btn-teal" style="padding:4px 10px; font-size:0.75rem;" onclick="event.stopPropagation(); App.openLogVitalsModal('${p.id}')">
+              <button class="btn-teal" style="padding:4px 10px; font-size:0.75rem;" onclick="event.stopPropagation(); App.promptNurseCheck('${p.id}')">
                 ${Icons.svg('activity', 13)} Log Vitals
               </button>
             ` : '')}
