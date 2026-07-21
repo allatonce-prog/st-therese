@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>St. Therese MedTech Solution — Hospital ERP & Clinical Information System</title>
+
+  <!-- Modern 2026 Typography (Inter font) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+  <!-- App Glass Shell -->
+  <div id="app-shell">
+
+    <!-- Main ERP Grid (Meta Business Suite Style Hover Collapsible Sidebar + Workspace Canvas) -->
+    <div class="erp-grid-layout">
+
+      <!-- Modern Floating Glass Sidebar Navigation (Collapses when unhovered, expands on hover) -->
+      <aside class="floating-glass-sidebar">
+        <div>
+          <!-- Brand Header -->
+          <div class="sidebar-brand">
+            <span id="sb-logo-svg"></span>
+            <div class="brand-text-wrap">
+              <div class="brand-name">St. Therese</div>
+              <div class="brand-sub">MedTech Solution</div>
+            </div>
+          </div>
+
+          <!-- Navigation Items -->
+          <div class="sidebar-menu-title">Main Menu</div>
+          <nav class="sidebar-nav">
+            <div class="nav-item active" onclick="App.setNav('dashboard', this)" title="Dashboard">
+              <span class="nav-icon" id="nv-dash-icon"></span>
+              <span class="nav-label">Dashboard</span>
+            </div>
+            <div class="nav-item" onclick="App.setNav('patients', this)" title="Patient Directory">
+              <span class="nav-icon" id="nv-pat-icon"></span>
+              <span class="nav-label">Patient Directory</span>
+            </div>
+            <div class="nav-item" onclick="App.setNav('triage', this)" title="ER Intake & Triage">
+              <span class="nav-icon" id="nv-triage-icon"></span>
+              <span class="nav-label">ER Intake & Triage</span>
+            </div>
+            <div class="nav-item" onclick="App.setNav('beds', this)" title="Bed & Ward System">
+              <span class="nav-icon" id="nv-bed-icon"></span>
+              <span class="nav-label">Bed & Ward System</span>
+            </div>
+            <div class="nav-item" onclick="App.setNav('doctors', this)" title="Doctor Directory">
+              <span class="nav-icon" id="nv-doc-icon"></span>
+              <span class="nav-label">Doctor Directory</span>
+            </div>
+            <div class="nav-item" onclick="App.setNav('lab', this)" title="Lab & Diagnostics">
+              <span class="nav-icon" id="nv-lab-icon"></span>
+              <span class="nav-label">Lab & Diagnostics</span>
+            </div>
+            <div class="nav-item" onclick="App.setNav('pharmacy', this)" title="Pharmacy & Supplies">
+              <span class="nav-icon" id="nv-pharm-icon"></span>
+              <span class="nav-label">Pharmacy & Supplies</span>
+            </div>
+            <div class="nav-item" onclick="Auth.logout()" title="Logout Session" style="margin-top:10px; color:var(--danger)">
+              <span class="nav-icon" id="nv-logout-icon"></span>
+              <span class="nav-label">Logout Session</span>
+            </div>
+          </nav>
+        </div>
+
+        <!-- User Profile Card at Bottom with Logout Action -->
+        <div class="sidebar-user-card">
+          <div class="user-info">
+            <div class="user-avatar-box">AU</div>
+            <div class="user-text-wrap">
+              <div style="font-weight:800; font-size:0.84rem; color:var(--text-dark);">Admin User</div>
+              <div style="font-size:0.7rem; color:var(--text-muted);">Administrator</div>
+            </div>
+          </div>
+          <button class="btn-glass" style="padding:6px 10px; font-size:0.75rem; color:var(--danger);" onclick="Auth.logout()" title="Click to Logout Session">
+            <span id="user-lock-icon"></span> Logout
+          </button>
+        </div>
+      </aside>
+
+      <!-- Right Main ERP Canvas Container -->
+      <main class="right-erp-canvas" id="main-view">
+
+        <!-- Top Toolbar Bar -->
+        <div class="erp-topbar">
+          <div class="erp-topbar-left">
+            <!-- Search Box -->
+            <div class="search-box">
+              <span class="search-box-icon" id="sb-icon"></span>
+              <input placeholder="Search patient, ID..." oninput="App.filterPatients(this.value)">
+            </div>
+
+            <!-- Filters -->
+            <select class="select-filter">
+              <option>All Patients</option>
+              <option>Admitted Only</option>
+              <option>Discharged</option>
+            </select>
+            <select class="select-filter">
+              <option>Healthcare</option>
+              <option>Emergency Care</option>
+              <option>Internal Medicine</option>
+              <option>Surgery</option>
+            </select>
+          </div>
+
+          <div class="erp-topbar-right">
+            <!-- Action Buttons -->
+            <button class="btn-teal" onclick="App.openIntakeWizardModal()">
+              <span id="btn-plus-icon"></span> + New Patient Card
+            </button>
+            <button class="btn-glass" onclick="App.toast('New Issue Slip created','info')">
+              <span id="btn-issue-icon"></span> New Issue
+            </button>
+            <button class="btn-glass" onclick="App.toast('Report List Generated','success')">
+              <span id="btn-report-icon"></span> Report List
+            </button>
+
+            <!-- Bell Notification Icon -->
+            <div style="width:38px; height:38px; border-radius:10px; background:#FFFFFF; border:1px solid #CBD5E1; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="App.toast('0 New Notifications','info')" id="bell-wrap"></div>
+          </div>
+        </div>
+
+        <!-- Integrated Top Metrics Bar -->
+        <div class="top-metrics-bar">
+          <!-- OPD Count + Sparkline -->
+          <div class="top-metric-card" style="padding-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <div class="tm-label">OPD Count</div>
+              <span id="tm-opd-icon"></span>
+            </div>
+            <div class="tm-value" style="color:var(--primary-teal)">27,323</div>
+            <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:6px;">Outpatient Visits</div>
+            <div id="opd-sparkline-wrap"></div>
+          </div>
+
+          <div class="top-metric-card">
+            <div class="tm-label">Total Revenue</div>
+            <div class="tm-value" style="color:var(--primary-blue)">₱1,032,050.00</div>
+            <div style="font-size:0.72rem; color:var(--success); font-weight:700; margin-top:4px; display:flex; align-items:center; gap:4px;">
+              <span id="tm-rev-icon"></span> ▲ 13.45% Growth
+            </div>
+          </div>
+
+          <div class="top-metric-card" style="cursor:pointer;" onclick="App.setNav('beds')">
+            <div class="tm-label">Bed Occupancy Rate</div>
+            <div class="tm-value" style="color:var(--warning)">73.4%</div>
+            <div style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">166 Occupied / 226 Total</div>
+          </div>
+
+          <div class="top-metric-card">
+            <div class="tm-label">Pending Payments</div>
+            <div class="tm-value" style="color:var(--danger)">₱1,337,000.00</div>
+            <div style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">Financial Accounts</div>
+          </div>
+        </div>
+
+        <!-- Analytics Grid (Admissions Trend + Bed Status Donut Graph + Billing Summary) -->
+        <div class="analytics-grid" style="grid-template-columns: 2.2fr 1.3fr 1.2fr;">
+          
+          <!-- Panel 1: Patient Admissions Trend -->
+          <div class="analytics-card">
+            <div class="analytics-hdr">
+              <h3>PATIENT ADMISSIONS TREND</h3>
+              <select class="select-filter" style="padding:4px 10px; font-size:0.75rem;">
+                <option>Patient admissions</option>
+              </select>
+            </div>
+            <!-- Admissions Line/Area Chart -->
+            <div id="admissions-chart-wrap"></div>
+          </div>
+
+          <!-- Panel 2: BED CAPACITY & STATUS DONUT GRAPH -->
+          <div class="analytics-card" style="cursor:pointer;" onclick="App.setNav('beds')">
+            <div class="analytics-hdr">
+              <h3>BED CAPACITY & STATUS</h3>
+              <span id="bed-hdr-icon" style="color:var(--primary-teal); cursor:pointer;"></span>
+            </div>
+            
+            <!-- Bed Donut Ring Graph -->
+            <div id="bed-donut-wrap"></div>
+
+            <!-- Detailed Bed Breakdown Legend -->
+            <div style="margin-top:16px; padding-top:14px; border-top:1px solid #E2E8F0; display:flex; flex-direction:column; gap:8px; font-size:0.82rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-dark);">
+                  <span style="width:10px; height:10px; border-radius:50%; background:#94A3B8;"></span> Total Capacity
+                </span>
+                <strong style="font-size:0.9rem;">226 Beds</strong>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-dark);">
+                  <span style="width:10px; height:10px; border-radius:50%; background:#16A34A;"></span> Occupied Beds
+                </span>
+                <strong style="color:#16A34A; font-size:0.9rem;">166 Beds</strong>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-dark);">
+                  <span style="width:10px; height:10px; border-radius:50%; background:#00BCD4;"></span> Available Beds
+                </span>
+                <strong style="color:#00BCD4; font-size:0.9rem;">60 Beds</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel 3: Billing Summary Donut -->
+          <div class="analytics-card">
+            <div class="analytics-hdr">
+              <h3>BILLING SUMMARY</h3>
+            </div>
+            <!-- Donut Ring Chart -->
+            <div id="billing-donut-wrap"></div>
+
+            <div style="margin-top:16px; padding-top:12px; border-top:1px solid #E2E8F0;">
+              <div style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Pending Payments</div>
+              <div style="font-size:1.3rem; font-weight:800; color:var(--text-dark); margin-top:2px;">₱1,337,000.00</div>
+              <div style="width:100%; height:6px; background:#E2E8F0; border-radius:3px; margin-top:8px; overflow:hidden;">
+                <div style="width:75%; height:100%; background:var(--primary-teal); border-radius:3px;"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Recent Patient List Table Card -->
+        <div class="erp-table-card">
+          <div class="table-hdr">
+            <h3>RECENT PATIENT LIST</h3>
+            <button class="btn-teal" style="padding:6px 14px; font-size:0.78rem;" onclick="App.openIntakeWizardModal()">+ Add Patient</button>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="erp-table">
+              <thead>
+                <tr>
+                  <th>Patient Name</th>
+                  <th>ID</th>
+                  <th>Department</th>
+                  <th>Status</th>
+                  <th>Last Update</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="recent-patients-tbody">
+                <!-- Dynamically rendered via App.init() -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+
+    </div>
+
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script src="js/icons.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/modules/beds.js"></script>
+  <script src="js/modules/patients.js"></script>
+  <script src="js/modules/doctors.js"></script>
+  <script src="js/modules/lab.js"></script>
+  <script src="js/modules/pharmacy.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Inject Logo & Vector SVG Icons
+      document.getElementById('sb-logo-svg').innerHTML    = Icons.logo(30);
+      document.getElementById('nv-dash-icon').innerHTML   = Icons.svg('activity', 18);
+      document.getElementById('nv-pat-icon').innerHTML    = Icons.svg('users', 18);
+      document.getElementById('nv-triage-icon').innerHTML = Icons.svg('hospital', 18);
+      document.getElementById('nv-bed-icon').innerHTML    = Icons.svg('bed', 18);
+      document.getElementById('nv-doc-icon').innerHTML    = Icons.svg('stethoscope', 18);
+      document.getElementById('nv-lab-icon').innerHTML    = Icons.svg('fileText', 18);
+      document.getElementById('nv-pharm-icon').innerHTML  = Icons.svg('revenue', 18);
+      document.getElementById('nv-logout-icon').innerHTML = Icons.svg('lock', 18, 'var(--danger)');
+      document.getElementById('user-lock-icon').innerHTML = Icons.svg('lock', 14, 'var(--danger)');
+
+      document.getElementById('tm-opd-icon').innerHTML    = Icons.svg('users', 16, 'var(--primary-teal)');
+      document.getElementById('tm-rev-icon').innerHTML    = Icons.svg('trendingUp', 12, '#166534');
+      document.getElementById('bed-hdr-icon').innerHTML   = Icons.svg('bed', 18, 'var(--primary-teal)');
+
+      document.getElementById('sb-icon').innerHTML        = Icons.svg('search', 16, '#94A3B8');
+      document.getElementById('btn-plus-icon').innerHTML  = Icons.svg('plus', 16, '#FFF');
+      document.getElementById('btn-issue-icon').innerHTML = Icons.svg('calendar', 16, '#475569');
+      document.getElementById('btn-report-icon').innerHTML= Icons.svg('fileText', 16, '#475569');
+      document.getElementById('bell-wrap').innerHTML      = Icons.svg('bell', 18, '#475569');
+
+      // Inject Native SVG Charts
+      document.getElementById('opd-sparkline-wrap').innerHTML   = Charts.opdSparkline();
+      document.getElementById('bed-donut-wrap').innerHTML       = Charts.bedStatusDonut(166, 60);
+      document.getElementById('admissions-chart-wrap').innerHTML  = Charts.admissionsTrend();
+      document.getElementById('billing-donut-wrap').innerHTML    = Charts.billingDonut();
+
+      // Ensure Patient Table Rows render immediately
+      App.renderDashboard();
+    });
+  </script>
+</body>
+</html>

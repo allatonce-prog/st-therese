@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — St. Therese MedTech Solution</title>
+
+  <!-- Modern 2026 Typography (Inter font) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+
+  <!-- Minimalist Split Card Modal Container -->
+  <div class="login-card-modal">
+
+    <!-- LEFT PANEL: VECTOR GRADIENT HERO CARD (NO PHOTO IMAGES) -->
+    <div class="brand-left-panel">
+      <div class="brand-hero-top">
+        <div class="pill-brand-badge">
+          <span id="hero-logo-icon"></span>
+          <span style="font-weight:800; font-size:0.85rem; letter-spacing:0.04em;">St. Therese MedTech</span>
+        </div>
+
+        <h1 class="brand-hero-title">Hospital Information & Clinical ERP System</h1>
+      </div>
+
+      <div class="brand-hero-bottom">
+        <p class="brand-hero-tagline">
+          "Empowering Healthcare, One Click at a Time: Your Health, Your Records, Your Control."
+        </p>
+        <div style="font-size:0.75rem; color:rgba(255,255,255,0.7); margin-top:16px;">
+          Version 2026.4 · PhilHealth Accredited · ISO 9001 Certified
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: MINIMALIST CLEAN FORM (MATCHING REFERENCE UI) -->
+    <div class="form-right-panel">
+      
+      <!-- Top Pill Logo Icon -->
+      <div class="form-header-center">
+        <div style="width:48px; height:48px; margin:0 auto 10px; border-radius:50%; background:linear-gradient(135deg, #0288D1, #00A896); display:flex; align-items:center; justify-content:center; color:#FFF;" id="top-pill-logo"></div>
+        <h2>Login</h2>
+        <p>Log in to your hospital account</p>
+      </div>
+
+      <!-- Alert Box -->
+      <div class="alert-msg" id="alert-box"></div>
+
+      <form id="login-form" onsubmit="LoginApp.handleLogin(event)">
+        <!-- Email Input -->
+        <div class="form-group">
+          <label class="form-label">Email Address / ID</label>
+          <input type="email" id="login-email" class="pill-input" required placeholder="Enter your email" value="admin@sttherese.ph">
+        </div>
+
+        <!-- Password Input -->
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="login-password" class="pill-input" required placeholder="Enter your password" value="admin">
+          <a href="#" onclick="alert('Demo Mode: Please contact St. Therese System Administrator.')" class="forgot-link">Forgot Password?</a>
+        </div>
+
+        <!-- Hospital Branch Dropdown -->
+        <div class="form-group">
+          <label class="form-label">Hospital Branch</label>
+          <select id="login-hospital" class="pill-select" required>
+            <option value="main">St. Therese Main Medical Center</option>
+            <option value="specialty">St. Therese Specialty Clinic</option>
+            <option value="er">St. Therese Emergency Center</option>
+          </select>
+        </div>
+
+        <!-- Main Pill Action Button matching reference layout -->
+        <button type="submit" class="btn-pill-submit">
+          Log In
+        </button>
+
+        <!-- Secondary SSO Button matching reference screenshot -->
+        <button type="button" class="btn-pill-sso" onclick="LoginApp.autofill('admin@sttherese.ph', 'admin')">
+          <span id="sso-shield-icon"></span> Sign In with Hospital SSO
+        </button>
+      </form>
+
+      <!-- Quick Demo Login Shortcuts -->
+      <div class="demo-bar">
+        <div class="demo-title">Quick Demo Login Shortcuts</div>
+        <div class="demo-btns">
+          <button class="demo-btn" onclick="LoginApp.autofill('admin@sttherese.ph', 'admin')">Admin User</button>
+          <button class="demo-btn" onclick="LoginApp.autofill('doctor@sttherese.ph', 'doc123')">Dr. Pelias</button>
+          <button class="demo-btn" onclick="LoginApp.autofill('nurse@sttherese.ph', 'nurse123')">RN Santos</button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script src="js/icons.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/auth.js"></script>
+
+  <script>
+    const LoginApp = {
+      init () {
+        document.getElementById('hero-logo-icon').innerHTML = Icons.logo(22);
+        document.getElementById('top-pill-logo').innerHTML  = Icons.logo(26);
+        document.getElementById('sso-shield-icon').innerHTML= Icons.svg('shield', 16, '#0288D1');
+      },
+
+      autofill (email, pass) {
+        document.getElementById('login-email').value = email;
+        document.getElementById('login-password').value = pass;
+        this.showAlert('Demo credentials filled!', 'success');
+      },
+
+      handleLogin (e) {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const pass  = document.getElementById('login-password').value;
+
+        const res = Auth.login(email, pass);
+        if (res.success) {
+          this.showAlert(`Welcome back, ${res.user.name}! Authenticating...`, 'success');
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 600);
+        } else {
+          this.showAlert('❌ Invalid Credentials: Check email and password.', 'error');
+        }
+      },
+
+      showAlert (msg, type) {
+        const box = document.getElementById('alert-box');
+        box.className = `alert-msg alert-${type}`;
+        box.textContent = msg;
+        box.style.display = 'block';
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => LoginApp.init());
+  </script>
+</body>
+</html>
