@@ -33,10 +33,6 @@ const App = {
           <span class="nav-icon">${Icons.svg('users', 18)}</span>
           <span class="nav-label">Assigned Inpatients</span>
         </div>
-        <div class="nav-item" onclick="App.openLogVitalsModal('IP26-001883')" title="Log Bedside Vitals">
-          <span class="nav-icon">${Icons.svg('fileText', 18)}</span>
-          <span class="nav-label">+ Log Bedside Vitals</span>
-        </div>
         <div class="nav-item ${this.currentNav === 'beds' ? 'active' : ''}" onclick="App.setNav('beds', this)" title="Ward 2001 Bed Map">
           <span class="nav-icon">${Icons.svg('bed', 18)}</span>
           <span class="nav-label">Ward 2001 Bed Map</span>
