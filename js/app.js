@@ -540,75 +540,109 @@ const App = {
   /* ── ER Triage Intake Wizard Modal ───────────────────────── */
   openIntakeWizardModal () {
     this.modal(`
-      ${App.modalHeader('St. Therese Patient Intake & ER Triage Wizard', 'hospital')}
-      <div class="modal-body">
+      ${App.modalHeader('Patient Intake & ER Triage Wizard', 'hospital')}
+      <div class="modal-body" style="padding:18px 22px;">
         <form id="erp-intake-form" onsubmit="App.saveIntake(event)">
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
-            <div>
-              <label style="display:block; font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">First Name *</label>
-              <input class="form-control" id="if-fname" required style="width:100%; padding:8px 12px; border:1px solid #CBD5E1; border-radius:6px;">
+          
+          <!-- Section 1: Demographics -->
+          <div class="form-section-box">
+            <div class="form-section-title">
+              <span>${Icons.svg('users', 16, 'var(--primary-teal)')}</span>
+              <span>1. Patient Demographics</span>
             </div>
-            <div>
-              <label style="display:block; font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Last Name *</label>
-              <input class="form-control" id="if-lname" required style="width:100%; padding:8px 12px; border:1px solid #CBD5E1; border-radius:6px;">
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px;">
+              <div>
+                <label class="form-label">First Name *</label>
+                <input class="form-control-input" id="if-fname" required placeholder="e.g. Maria">
+              </div>
+              <div>
+                <label class="form-label">Last Name *</label>
+                <input class="form-control-input" id="if-lname" required placeholder="e.g. Santos">
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:12px;">
+              <div>
+                <label class="form-label">Birthdate *</label>
+                <input class="form-control-input" id="if-dob" type="date" required>
+              </div>
+              <div>
+                <label class="form-label">Sex *</label>
+                <select class="form-control-select" id="if-sex" required>
+                  <option value="Female">Female</option>
+                  <option value="Male">Male</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Blood Type *</label>
+                <select class="form-control-select" id="if-blood" required>
+                  <option value="O+">O+</option>
+                  <option value="A+">A+</option>
+                  <option value="B+">B+</option>
+                  <option value="AB+">AB+</option>
+                  <option value="O-">O-</option>
+                  <option value="A-">A-</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:14px;">
-            <div>
-              <label style="display:block; font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Birthdate *</label>
-              <input class="form-control" id="if-dob" type="date" required style="width:100%; padding:8px 12px; border:1px solid #CBD5E1; border-radius:6px;">
+          <!-- Section 2: Clinical Triage & Placement -->
+          <div class="form-section-box" style="margin-bottom:0;">
+            <div class="form-section-title">
+              <span>${Icons.svg('activity', 16, 'var(--primary-teal)')}</span>
+              <span>2. Clinical Triage & Unit Placement</span>
             </div>
-            <div>
-              <label style="display:block; font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Sex *</label>
-              <select class="form-control" id="if-sex" required style="width:100%; padding:8px 12px; border:1px solid #CBD5E1; border-radius:6px;">
-                <option value="Female">Female</option>
-                <option value="Male">Male</option>
-              </select>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px;">
+              <div>
+                <label class="form-label">Department *</label>
+                <select class="form-control-select" id="if-dept" required>
+                  <option value="Emergency Care">Emergency Care</option>
+                  <option value="Internal Medicine">Internal Medicine</option>
+                  <option value="OB-GYN (Delivery)">OB-GYN / Delivery</option>
+                  <option value="Surgery">Surgery</option>
+                  <option value="Pediatrics">Pediatrics</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Triage Priority Level *</label>
+                <select class="form-control-select" id="if-triage" required>
+                  <option value="YELLOW">Level 2 — YELLOW (Emergent)</option>
+                  <option value="RED">Level 1 — RED (Critical)</option>
+                  <option value="GREEN">Level 3 — GREEN (Non-Urgent)</option>
+                </select>
+              </div>
             </div>
+
+            <div style="margin-bottom:10px;">
+              <label class="form-label">Chief Complaint / Primary Symptom *</label>
+              <input class="form-control-input" id="if-complaint" required placeholder="e.g., Acute abdominal pain, High fever, Sudden vaginal bleeding">
+            </div>
+
             <div>
-              <label style="display:block; font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Department *</label>
-              <select class="form-control" id="if-dept" required style="width:100%; padding:8px 12px; border:1px solid #CBD5E1; border-radius:6px;">
-                <option value="Emergency Care">Emergency Care</option>
-                <option value="Internal Medicine">Internal Medicine</option>
-                <option value="Pediatrics / OB">Pediatrics / OB</option>
-                <option value="Surgery">Surgery</option>
+              <label class="form-label">Target Hospital Ward / Unit *</label>
+              <select class="form-control-select" id="if-dest" required>
+                <option value="2001 (Station A)">General Ward (Station A)</option>
+                <option value="Ward B">Ward B (Cardiology)</option>
+                <option value="ICU">ICU (Critical Care Bay)</option>
+                <option value="Delivery Room">Delivery Suite (DR)</option>
+                <option value="Operating Room">Operating Suite (OR)</option>
               </select>
             </div>
           </div>
 
-          <div style="margin-bottom:14px;">
-            <label style="display:block; font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Chief Complaint / Symptom *</label>
-            <input class="form-control" id="if-complaint" required placeholder="e.g., Acute abdominal pain, High fever, Sudden vaginal bleeding" style="width:100%; padding:8px 12px; border:1px solid #CBD5E1; border-radius:6px;">
-          </div>
-
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
-            <div>
-              <label style="display:block; font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Triage Level *</label>
-              <select class="form-control" id="if-triage" required style="width:100%; padding:8px 12px; border:1px solid #CBD5E1; border-radius:6px;">
-                <option value="YELLOW">Level 2 — YELLOW (Emergent)</option>
-                <option value="RED">Level 1 — RED (Critical)</option>
-                <option value="GREEN">Level 3 — GREEN (Non-Urgent)</option>
-              </select>
-            </div>
-            <div>
-              <label style="display:block; font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Target Unit *</label>
-              <select class="form-control" id="if-dest" required style="width:100%; padding:8px 12px; border:1px solid #CBD5E1; border-radius:6px;">
-                <option value="Ward">General Ward</option>
-                <option value="ICU">ICU (Critical Care)</option>
-                <option value="DR">Delivery Room (DR)</option>
-                <option value="OR">Operating Room (OR)</option>
-              </select>
-            </div>
-          </div>
-
-          <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+          <!-- Modal Action Buttons -->
+          <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px; padding-top:14px; border-top:1px solid #E2E8F0;">
             <button type="button" class="btn-glass" onclick="App.closeModal()">Cancel</button>
-            <button type="submit" class="btn-teal">Save Patient Card & Admit</button>
+            <button type="submit" class="btn-teal">
+              ${Icons.svg('check', 16)} Save Patient Card & Admit
+            </button>
           </div>
         </form>
       </div>
-    `, 'modal-lg');
+    `, 'modal-md');
   },
 
   saveIntake (e) {
@@ -617,26 +651,61 @@ const App = {
     const lname = document.getElementById('if-lname').value.trim();
     const dob   = document.getElementById('if-dob').value;
     const sex   = document.getElementById('if-sex').value;
+    const blood = document.getElementById('if-blood')?.value || 'O+';
     const dept  = document.getElementById('if-dept').value;
     const complaint = document.getElementById('if-complaint').value.trim();
     const triage    = document.getElementById('if-triage').value;
+    const destName  = document.getElementById('if-dest')?.value || '2001 (Station A)';
     const pid   = `0000${String(DB.patients.length + 100).padStart(3,'0')}`;
+
+    const todayStr = new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
 
     const newPatient = {
       id: pid,
       firstName: fname, lastName: lname, middleName: '',
       birthdate: dob, age: dob ? DH.age(dob) : 30, sex,
       department: dept, status: 'Admitted',
-      registeredDate: '20 May 2026', triageLevel: triage,
+      registeredDate: todayStr, triageLevel: triage,
       chiefComplaint: complaint, admittingDiagnosis: complaint,
-      bloodType: 'O+', allergies: 'None known',
+      bloodType: blood, allergies: 'None known',
       philHealthNumber: `PH-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
     };
 
+    // Add to master patient database
     DB.patients.unshift(newPatient);
+
+    // Auto-assign an available bed in target unit or fallback
+    const targetRoom = DB.rooms.find(r => r.name.includes(destName) || r.department.includes(dept)) || DB.rooms[0];
+    const availBed = DB.beds.find(b => b.roomId === targetRoom.id && b.status === 'available') || DB.beds.find(b => b.status === 'available');
+
+    if (availBed) {
+      availBed.status = 'occupied';
+      DB.admissions.unshift({
+        id: DH.nextId('ADM-'),
+        patientId: pid,
+        roomId: availBed.roomId,
+        bedId: availBed.id,
+        doctorId: 'U003',
+        admissionDate: todayStr,
+        admissionReason: complaint,
+        status: 'Admitted'
+      });
+      DB.metrics.beds.occupied++;
+      if (DB.metrics.beds.available > 0) DB.metrics.beds.available--;
+    }
+
     this.closeModal();
-    this.toast(`Patient ${fname} ${lname} registered successfully!`, 'success');
-    this.renderDashboard();
+    this.toast(`Patient ${fname} ${lname} registered & admitted to ${targetRoom.name}!`, 'success');
+
+    // Instantly re-render whichever view is active
+    const mainView = document.getElementById('main-view');
+    if (this.currentNav === 'patients' && mainView) {
+      PatientsModule.render(mainView);
+    } else if (this.currentNav === 'beds' && mainView) {
+      BedsModule.render(mainView);
+    } else {
+      this.renderDashboard();
+    }
   },
 
   /* ── Modals & Overlay ────────────────────────────────────── */
