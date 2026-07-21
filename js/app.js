@@ -369,96 +369,122 @@ const App = {
 
     mainView.innerHTML = `
       <!-- EHR Top Navigation Header Bar -->
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <button class="btn-glass" onclick="App.renderDashboard()" style="padding:8px 16px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <button class="btn-glass" onclick="App.renderDashboard()" style="padding:7px 14px; font-size:0.8rem;">
             ${Icons.svg('chevronLeft', 14)} Back to ERP Dashboard
           </button>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <h2 style="font-size:1.3rem; font-weight:800; color:var(--text-dark); margin:0;">${p.firstName} ${p.lastName}</h2>
+            <span class="badge-status ${DH.statusBadge(p.status)}">${p.status}</span>
+            <span style="font-family:monospace; font-weight:700; font-size:0.8rem; background:#E0F2FE; color:var(--primary-blue); padding:3px 8px; border-radius:6px;">ID: ${p.id}</span>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:0.75rem; font-weight:600; background:#F0FDF4; color:#166534; border:1px solid #86EFAC; padding:5px 10px; border-radius:8px; display:inline-flex; align-items:center; gap:6px;">
+            ${Icons.svg('check', 14, '#166534')} Security Authorized
+          </span>
+          <button class="btn-glass" onclick="window.print()" style="padding:7px 14px; font-size:0.8rem;">
+            ${Icons.svg('fileText', 14)} Print EHR Chart
+          </button>
+          <button class="btn-teal" onclick="App.openIntakeWizardModal()" style="padding:7px 14px; font-size:0.8rem;">
+            ${Icons.svg('plus', 14)} New Admission
+          </button>
+        </div>
+      </div>
+
+      <!-- Patient Profile Hero Card -->
+      <div class="analytics-card" style="margin-bottom:20px; padding:20px; border-top:4px solid var(--primary-teal);">
+        <div style="display:grid; grid-template-columns:auto 1fr 1fr 1fr; gap:20px; align-items:center;">
+          
+          <!-- Column 1: Avatar & Basic Info -->
+          <div style="display:flex; align-items:center; gap:14px; padding-right:16px; border-right:1px solid #E2E8F0;">
+            <div style="width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg, #00A896, #0288D1); color:#FFF; font-size:1.6rem; font-weight:800; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 16px rgba(0,168,150,0.25); flex-shrink:0;">
+              ${p.firstName[0]}${p.lastName[0]}
+            </div>
+            <div>
+              <div style="font-weight:800; font-size:1.05rem; color:var(--text-dark);">${p.firstName} ${p.lastName}</div>
+              <div style="font-size:0.78rem; font-weight:600; color:var(--text-muted); margin-top:2px;">${p.age} yrs · ${p.sex}</div>
+              <div style="font-size:0.74rem; font-weight:700; color:var(--primary-blue); font-family:monospace; margin-top:2px;">${p.philHealthNumber || 'PH-9923847102'}</div>
+            </div>
+          </div>
+
+          <!-- Column 2: Ward & Bed Location -->
+          <div style="padding-right:16px; border-right:1px solid #E2E8F0;">
+            <div style="font-size:0.68rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Assigned Unit & Bed</div>
+            <div style="font-size:0.92rem; font-weight:800; color:var(--text-dark); margin-top:3px; display:flex; align-items:center; gap:6px;">
+              <span>${Icons.svg('bed', 16, 'var(--primary-teal)')}</span>
+              <span>${room?.name || '2001 (Station A)'} / Bed ${bed?.number || '1'}</span>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:3px; font-weight:600;">Department: ${p.department || 'Medicine'}</div>
+          </div>
+
+          <!-- Column 3: Blood Type & Allergies -->
+          <div style="padding-right:16px; border-right:1px solid #E2E8F0;">
+            <div style="font-size:0.68rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Blood Type & Allergies</div>
+            <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+              <span style="background:#EF4444; color:#FFF; font-weight:800; font-size:0.75rem; padding:2px 8px; border-radius:6px;">${p.bloodType}</span>
+              <span style="font-size:0.8rem; font-weight:700; color:var(--danger);">${p.allergies}</span>
+            </div>
+            <div style="font-size:0.74rem; color:var(--text-muted); margin-top:4px;">Registered: ${p.registeredDate}</div>
+          </div>
+
+          <!-- Column 4: Triage Priority -->
           <div>
-            <h2 style="font-size:1.4rem; font-weight:800; color:var(--text-dark); display:flex; align-items:center; gap:10px;">
-              <span>${p.firstName} ${p.lastName}</span>
-              <span class="badge-status ${DH.statusBadge(p.status)}">${p.status}</span>
-            </h2>
-            <div style="font-size:0.78rem; color:var(--text-muted);">Electronic Health Record (EHR) & Clinical Analytics Sheet</div>
-          </div>
-        </div>
-
-        <div style="display:flex; gap:10px;">
-          <button class="btn-glass" onclick="window.print()">
-            ${Icons.svg('fileText', 15)} Print Clinical Chart
-          </button>
-          <button class="btn-teal" onclick="App.openIntakeWizardModal()">
-            ${Icons.svg('plus', 15)} New Admission Record
-          </button>
-        </div>
-      </div>
-
-      <!-- Security Authorization Banner -->
-      <div style="padding:12px 18px; background:#F0FDF4; border:1px solid #86EFAC; color:#166534; border-radius:10px; margin-bottom:20px; display:flex; align-items:center; gap:12px; font-size:0.86rem;">
-        <span>${Icons.svg('check', 20, '#166534')}</span>
-        <span><strong>Record Security Authorized:</strong> Unlocked by ${Auth.user.name} on ${DH.now()}</span>
-      </div>
-
-      <!-- Patient Demographics & Profile Banner -->
-      <div class="analytics-card" style="margin-bottom:24px; padding:24px;">
-        <div style="display:grid; grid-template-columns:auto 1fr; gap:24px; align-items:center;">
-          <div style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, #00A896, #0288D1); color:#FFF; font-size:2rem; font-weight:800; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 24px rgba(0,168,150,0.3);">
-            ${p.firstName[0]}${p.lastName[0]}
+            <div style="font-size:0.68rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;">Triage Category</div>
+            <div>${DH.triageBadge(p.triageLevel)}</div>
           </div>
 
-          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; font-size:0.86rem;">
-            <div>
-              <div style="font-size:0.7rem; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Patient ID</div>
-              <div style="font-weight:800; color:var(--primary-blue); font-size:1.1rem; font-family:monospace;">${p.id}</div>
-            </div>
-            <div>
-              <div style="font-size:0.7rem; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Age / Sex</div>
-              <div style="font-weight:700; color:var(--text-dark);">${p.age} yrs / ${p.sex}</div>
-            </div>
-            <div>
-              <div style="font-size:0.7rem; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Blood Type & Allergies</div>
-              <div style="font-weight:700; color:var(--text-dark);">${p.bloodType} · <span style="color:var(--danger)">${p.allergies}</span></div>
-            </div>
-            <div>
-              <div style="font-size:0.7rem; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Unit & Bed</div>
-              <div style="font-weight:700; color:var(--text-dark);">${room?.name || '2001 (Station A)'} / Bed ${bed?.number || '1'}</div>
-            </div>
+        </div>
+      </div>
+
+      <!-- Vital Signs KPI Grid -->
+      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:20px;">
+        
+        <div class="top-metric-card" style="border-left:4px solid var(--primary-blue);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="tm-label">Blood Pressure</div>
+            <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">mmHg</span>
           </div>
+          <div class="tm-value" style="color:var(--primary-blue); margin-top:2px;">${vt.bp}</div>
+          <div style="font-size:0.72rem; color:var(--success); font-weight:700; margin-top:4px; display:inline-block; background:#F0FDF4; padding:2px 6px; border-radius:4px;">Normal Hemodynamics</div>
         </div>
+
+        <div class="top-metric-card" style="border-left:4px solid var(--danger);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="tm-label">Heart / Pulse Rate</div>
+            <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">bpm</span>
+          </div>
+          <div class="tm-value" style="color:var(--danger); margin-top:2px;">${vt.pr}</div>
+          <div style="font-size:0.72rem; color:var(--text-secondary); font-weight:700; margin-top:4px; display:inline-block; background:#F8FAFC; padding:2px 6px; border-radius:4px;">Normal Sinus Rhythm</div>
+        </div>
+
+        <div class="top-metric-card" style="border-left:4px solid var(--primary-teal);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="tm-label">Oxygen Saturation</div>
+            <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">SpO₂</span>
+          </div>
+          <div class="tm-value" style="color:var(--primary-teal); margin-top:2px;">${vt.spo2}%</div>
+          <div style="font-size:0.72rem; color:var(--success); font-weight:700; margin-top:4px; display:inline-block; background:#F0FDF4; padding:2px 6px; border-radius:4px;">Adequate Perfusion</div>
+        </div>
+
+        <div class="top-metric-card" style="border-left:4px solid var(--warning);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="tm-label">Body Temp & Pain</div>
+            <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">°C</span>
+          </div>
+          <div class="tm-value" style="color:var(--warning); margin-top:2px;">${vt.temp}°C</div>
+          <div style="font-size:0.72rem; color:var(--text-secondary); font-weight:700; margin-top:4px; display:inline-block; background:#FFFBEB; padding:2px 6px; border-radius:4px;">Pain Scale: ${vt.pain}/10</div>
+        </div>
+
       </div>
 
-      <!-- Patient Vitals Analytics Cards Grid -->
-      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:24px;">
-        <div class="top-metric-card">
-          <div class="tm-label">Blood Pressure</div>
-          <div class="tm-value" style="color:var(--primary-blue)">${vt.bp} <span style="font-size:0.8rem; font-weight:600; color:var(--text-muted)">mmHg</span></div>
-          <div style="font-size:0.72rem; color:var(--success); font-weight:700; margin-top:4px;">Normal Hemodynamics</div>
-        </div>
-
-        <div class="top-metric-card">
-          <div class="tm-label">Heart / Pulse Rate</div>
-          <div class="tm-value" style="color:var(--danger)">${vt.pr} <span style="font-size:0.8rem; font-weight:600; color:var(--text-muted)">bpm</span></div>
-          <div style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">Normal Sinus Rhythm</div>
-        </div>
-
-        <div class="top-metric-card">
-          <div class="tm-label">Oxygen Saturation</div>
-          <div class="tm-value" style="color:var(--primary-teal)">${vt.spo2}% <span style="font-size:0.8rem; font-weight:600; color:var(--text-muted)">SpO₂</span></div>
-          <div style="font-size:0.72rem; color:var(--success); font-weight:700; margin-top:4px;">Adequate Perfusion</div>
-        </div>
-
-        <div class="top-metric-card">
-          <div class="tm-label">Body Temp & Pain</div>
-          <div class="tm-value" style="color:var(--warning)">${vt.temp}°C</div>
-          <div style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">Pain Scale: ${vt.pain}/10</div>
-        </div>
-      </div>
-
-      <!-- Native SVG Patient Vital Signs Trend Graph (Full Width Panel) -->
-      <div class="analytics-card" style="margin-bottom:24px; padding:24px;">
+      <!-- Native SVG Patient Vital Signs Trend Graph -->
+      <div class="analytics-card" style="margin-bottom:20px; padding:20px;">
         <div class="analytics-hdr">
           <h3 style="display:flex; align-items:center; gap:8px;">
-            <span>${Icons.svg('activity', 20, 'var(--primary-teal)')}</span>
+            <span>${Icons.svg('activity', 18, 'var(--primary-teal)')}</span>
             <span>PATIENT VITAL SIGNS TREND GRAPH</span>
           </h3>
           <div style="display:flex; gap:14px; font-size:0.78rem; font-weight:700;">
@@ -478,34 +504,43 @@ const App = {
         <div id="vitals-trend-chart-container"></div>
       </div>
 
-      <!-- Clinical Information & Encounter Grid -->
-      <div style="display:grid; grid-template-columns:2fr 1fr; gap:20px; margin-bottom:24px;">
+      <!-- Clinical Diagnoses & Attending Care Team Grid -->
+      <div style="display:grid; grid-template-columns:2fr 1fr; gap:20px; margin-bottom:20px;">
         
         <!-- Clinical Summary & Diagnoses -->
-        <div class="analytics-card">
+        <div class="analytics-card" style="padding:20px;">
           <div class="analytics-hdr">
-            <h3>CHIEF COMPLAINT & CLINICAL DIAGNOSES</h3>
+            <h3 style="display:flex; align-items:center; gap:8px;">
+              <span>${Icons.svg('fileText', 18, 'var(--primary-teal)')}</span>
+              <span>CHIEF COMPLAINT & CLINICAL DIAGNOSES</span>
+            </h3>
           </div>
           
-          <div style="margin-bottom:16px;">
-            <div style="font-size:0.72rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Primary Chief Complaint</div>
-            <div style="font-size:0.95rem; font-weight:700; color:var(--text-dark);">${p.chiefComplaint || 'SUDDEN ONSET OF PROFUSE VAGINAL BLEEDING'}</div>
+          <div style="margin-bottom:14px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px;">
+            <div style="font-size:0.7rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;">Primary Chief Complaint</div>
+            <div style="font-size:0.92rem; font-weight:800; color:var(--text-dark);">${p.chiefComplaint || 'SUDDEN ONSET OF PROFUSE VAGINAL BLEEDING'}</div>
           </div>
 
-          <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-left:4px solid var(--primary-teal); border-radius:8px; padding:16px;">
-            <div style="font-size:0.75rem; font-weight:800; color:var(--primary-teal); text-transform:uppercase; margin-bottom:4px;">Admitting Clinical Diagnosis</div>
+          <div style="background:#F0FDF4; border:1px solid #86EFAC; border-left:4px solid var(--primary-teal); border-radius:10px; padding:14px;">
+            <div style="font-size:0.7rem; font-weight:800; color:var(--primary-teal); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;">Admitting Clinical Diagnosis</div>
             <div style="font-size:0.95rem; font-weight:800; color:var(--text-dark);">${p.admittingDiagnosis || 'THREATENED ABORTIONED G2P1 (1001) 15 WEEKS GESTATION'}</div>
-            <div style="font-size:0.78rem; color:var(--text-muted); margin-top:4px;">ICD-10 Code: O20.0 · Attending: Dr. April Sunshine Pelias</div>
+            <div style="font-size:0.76rem; color:var(--text-secondary); margin-top:6px; font-weight:600; display:flex; gap:12px; align-items:center;">
+              <span style="background:#00A896; color:#FFF; padding:2px 8px; border-radius:4px; font-weight:800; font-family:monospace;">ICD-10: O20.0</span>
+              <span>Attending Physician: Dr. April Sunshine Pelias</span>
+            </div>
           </div>
         </div>
 
         <!-- Active Care Team & Placement -->
-        <div class="analytics-card">
+        <div class="analytics-card" style="padding:20px;">
           <div class="analytics-hdr">
-            <h3>ATTENDING CARE TEAM</h3>
+            <h3 style="display:flex; align-items:center; gap:8px;">
+              <span>${Icons.svg('stethoscope', 18, 'var(--primary-teal)')}</span>
+              <span>ATTENDING CARE TEAM</span>
+            </h3>
           </div>
 
-          <div style="display:flex; flex-direction:column; gap:12px; font-size:0.86rem;">
+          <div style="display:flex; flex-direction:column; gap:10px; font-size:0.84rem;">
             <div style="display:flex; justify-content:space-between; padding-bottom:8px; border-bottom:1px solid #E2E8F0;">
               <span style="color:var(--text-muted); font-weight:600;">Attending Doctor</span>
               <strong style="color:var(--text-dark);">Dr. April Sunshine Pelias</strong>
@@ -518,9 +553,9 @@ const App = {
               <span style="color:var(--text-muted); font-weight:600;">Assigned Nurse</span>
               <strong style="color:var(--text-dark);">RN Maria Santos</strong>
             </div>
-            <div style="display:flex; justify-content:space-between;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding-top:2px;">
               <span style="color:var(--text-muted); font-weight:600;">PhilHealth ID</span>
-              <strong style="color:var(--primary-blue);">${p.philHealthNumber || 'PH-9923847102'}</strong>
+              <span style="font-family:monospace; font-weight:800; color:var(--primary-blue); font-size:0.84rem; background:#E0F2FE; padding:2px 8px; border-radius:4px;">${p.philHealthNumber || 'PH-9923847102'}</span>
             </div>
           </div>
         </div>
