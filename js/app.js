@@ -108,6 +108,10 @@ const App = {
           <span class="nav-icon">${Icons.svg('revenue', 18)}</span>
           <span class="nav-label">Pharmacy & Supplies</span>
         </div>
+        <div class="nav-item ${this.currentNav === 'users' ? 'active' : ''}" onclick="App.setNav('users', this)" title="User Accounts Management">
+          <span class="nav-icon">${Icons.svg('users', 18)}</span>
+          <span class="nav-label">User Accounts</span>
+        </div>
         <div class="nav-item" onclick="Auth.logout()" title="Logout Session" style="margin-top:10px; color:var(--danger)">
           <span class="nav-icon">${Icons.svg('lock', 18, 'var(--danger)')}</span>
           <span class="nav-label">Logout Session</span>
@@ -214,6 +218,11 @@ const App = {
       case 'pharmacy':
         PharmacyModule.render(mainView);
         this.toast('Viewing Pharmacy & Supplies Inventory', 'info');
+        break;
+
+      case 'users':
+        UsersModule.render(mainView);
+        this.toast('Viewing User Accounts & System Staff Directory', 'info');
         break;
 
       default:

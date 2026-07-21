@@ -284,6 +284,7 @@ body::after {
 .bs-admitted   { background: #E0F2FE; color: #0288D1; }
 .bs-discharged { background: #F0FDF4; color: #166534; }
 .bs-critical   { background: #FEF2F2; color: #991B1B; }
+.badge-suspended { background: #FEF2F2; color: #DC2626; }
 
 /* Modals & Overlay */
 .modal-overlay {
