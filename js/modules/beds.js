@@ -29,6 +29,9 @@ const BedsModule = {
           <button class="btn-glass" onclick="App.renderDashboard()">
             ${Icons.svg('chevronLeft', 14)} Back to Dashboard
           </button>
+          <button class="btn-teal" onclick="BedsModule.openAddRoomModal()">
+            ${Icons.svg('plus', 15)} + Add Room/Ward
+          </button>
           <button class="btn-teal" onclick="BedsModule.openAddBedModal()">
             ${Icons.svg('plus', 15)} + Add Bed
           </button>
@@ -277,6 +280,94 @@ const BedsModule = {
 
     App.closeModal();
     
+    // Re-render Bed & Ward System page
+    const mainView = document.getElementById('main-view');
+    if (mainView) BedsModule.render(mainView);
+  },
+
+  openAddRoomModal () {
+    App.modal(`
+      ${App.modalHeader('Add New Room / Ward Unit', 'hospital')}
+      <div class="modal-body" style="padding:18px 22px;">
+        <form onsubmit="BedsModule.saveNewRoom(event)">
+          <div style="margin-bottom:12px;">
+            <label class="form-label">Ward / Room Name *</label>
+            <input class="form-control-input" id="ar-name" required placeholder="e.g. Ward C, ICU Room 2, DR Suite 3">
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div>
+              <label class="form-label">Ward Type *</label>
+              <select class="form-control-select" id="ar-type" required>
+                <option value="General">General</option>
+                <option value="Intensive">Intensive</option>
+                <option value="Delivery">Delivery</option>
+                <option value="Surgical">Surgical</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Floor Number *</label>
+              <input class="form-control-input" id="ar-floor" type="number" required placeholder="e.g. 1, 2, 3" value="1">
+            </div>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label class="form-label">Specialized Department *</label>
+            <input class="form-control-input" id="ar-dept" required placeholder="e.g. Cardiology, OB-GYN, Pediatrics">
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px; padding-top:14px; border-top:1px solid #E2E8F0;">
+            <button type="button" class="btn-glass" onclick="App.closeModal()">Cancel</button>
+            <button type="submit" class="btn-teal">
+              ${Icons.svg('check', 16)} Add Room/Ward
+            </button>
+          </div>
+        </form>
+      </div>
+    `, 'modal-md');
+  },
+
+  async saveNewRoom (e) {
+    e.preventDefault();
+    const name = document.getElementById('ar-name').value.trim();
+    const type = document.getElementById('ar-type').value;
+    const floor = document.getElementById('ar-floor').value;
+    const dept = document.getElementById('ar-dept').value.trim();
+
+    if (!name || !dept) return;
+
+    // Check if room name already exists
+    const exists = DB.rooms.some(r => r.name.toLowerCase() === name.toLowerCase());
+    if (exists) {
+      App.toast(`Room/Ward name "${name}" already exists!`, 'error');
+      return;
+    }
+
+    const newRoom = {
+      id: DH.nextId('R'),
+      name: name,
+      type: type,
+      floor: Number(floor),
+      totalBeds: 0,
+      department: dept
+    };
+
+    DB.rooms.push(newRoom);
+
+    if (FB.isConfigured && FB.db) {
+      try {
+        await FB.db.collection('rooms').doc(newRoom.id).set(newRoom);
+        App.toast(`Ward/Room "${name}" added successfully!`, 'success');
+      } catch (err) {
+        console.error("Firestore Room Creation Error:", err);
+        App.toast(`Firestore Error: ${err.message}`, 'error');
+      }
+    } else {
+      App.toast(`Ward/Room "${name}" added locally!`, 'success');
+    }
+
+    App.closeModal();
+
     // Re-render Bed & Ward System page
     const mainView = document.getElementById('main-view');
     if (mainView) BedsModule.render(mainView);
