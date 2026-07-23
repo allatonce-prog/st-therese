@@ -1220,15 +1220,23 @@ const App = {
               <input class="form-control-input" id="if-complaint" required placeholder="e.g., Acute abdominal pain, High fever, Sudden vaginal bleeding">
             </div>
 
-            <div>
-              <label class="form-label">Target Hospital Ward / Unit *</label>
-              <select class="form-control-select" id="if-dest" required>
-                <option value="2001 (Station A)">General Ward (Station A)</option>
-                <option value="Ward B">Ward B (Cardiology)</option>
-                <option value="ICU">ICU (Critical Care Bay)</option>
-                <option value="Delivery Room">Delivery Suite (DR)</option>
-                <option value="Operating Room">Operating Suite (OR)</option>
-              </select>
+            <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:12px;">
+              <div>
+                <label class="form-label">Target Hospital Ward / Unit *</label>
+                <select class="form-control-select" id="if-dest" required onchange="App.updateIntakeBedOptions()">
+                  <option value="2001 (Station A)">General Ward (Station A)</option>
+                  <option value="Ward B">Ward B (Cardiology)</option>
+                  <option value="ICU">ICU (Critical Care Bay)</option>
+                  <option value="Delivery Room">Delivery Suite (DR)</option>
+                  <option value="Operating Room">Operating Suite (OR)</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Target Bed *</label>
+                <select class="form-control-select" id="if-bed-select" required>
+                  <!-- Populated dynamically -->
+                </select>
+              </div>
             </div>
           </div>
 
@@ -1242,6 +1250,22 @@ const App = {
         </form>
       </div>
     `, 'modal-md');
+    this.updateIntakeBedOptions();
+  },
+
+  updateIntakeBedOptions () {
+    const destName = document.getElementById('if-dest').value;
+    const bedSelect = document.getElementById('if-bed-select');
+    if (!bedSelect) return;
+
+    const room = DB.rooms.find(r => r.name.includes(destName)) || DB.rooms[0];
+    const availableBeds = DB.beds.filter(b => b.roomId === room.id && b.status === 'available');
+
+    if (availableBeds.length === 0) {
+      bedSelect.innerHTML = `<option value="">No Available Beds</option>`;
+    } else {
+      bedSelect.innerHTML = availableBeds.map(b => `<option value="${b.id}">Bed ${b.number}</option>`).join('');
+    }
   },
 
   saveIntake (e) {
@@ -1274,9 +1298,10 @@ const App = {
     // Add to master patient database
     DB.patients.unshift(newPatient);
 
-    // Auto-assign an available bed in target unit or fallback
-    const targetRoom = DB.rooms.find(r => r.name.includes(destName) || r.department.includes(dept)) || DB.rooms[0];
-    const availBed = DB.beds.find(b => b.roomId === targetRoom.id && b.status === 'available') || DB.beds.find(b => b.status === 'available');
+    // Assign specifically selected bed
+    const selectedBedId = document.getElementById('if-bed-select').value;
+    const availBed = DB.beds.find(b => b.id === selectedBedId);
+    const targetRoom = availBed ? DB.rooms.find(r => r.id === availBed.roomId) : DB.rooms[0];
 
     if (availBed) {
       availBed.status = 'occupied';
