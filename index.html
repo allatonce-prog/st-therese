@@ -265,6 +265,11 @@
   </div>
 
   <!-- JavaScript Modules -->
+  <!-- Firebase SDK Compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
   <script src="js/icons.js"></script>
   <script src="js/charts.js"></script>
   <script src="js/data.js"></script>
@@ -308,7 +313,22 @@
       document.getElementById('billing-donut-wrap').innerHTML    = Charts.billingDonut();
 
       // Ensure Patient Table Rows render immediately
-      App.renderDashboard();
+      if (FB.isConfigured) {
+        let initialized = false;
+        firebase.auth().onAuthStateChanged((user) => {
+          if (user) {
+            if (!initialized) {
+              initialized = true;
+              App.init();
+            }
+          } else {
+            // Not signed in, redirect to login page
+            window.location.href = 'login.html';
+          }
+        });
+      } else {
+        App.init();
+      }
     });
   </script>
 </body>

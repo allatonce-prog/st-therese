@@ -6,7 +6,10 @@
 const App = {
   currentNav: 'dashboard',
 
-  init () {
+  async init () {
+    if (FB.isConfigured) {
+      await DB.syncWithFirestore();
+    }
     this.renderSidebarNav();
     this.updateUserCard();
     this.renderDashboard();
@@ -371,28 +374,28 @@ const App = {
               <div class="tm-label">OPD Count</div>
               <span id="tm-opd-icon"></span>
             </div>
-            <div class="tm-value" style="color:var(--primary-teal)">27,323</div>
+            <div class="tm-value" style="color:var(--primary-teal)">${(DB.metrics.opdVisits || 0).toLocaleString('en-US')}</div>
             <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:6px;">Outpatient Visits</div>
             <div id="opd-sparkline-wrap"></div>
           </div>
 
           <div class="top-metric-card">
             <div class="tm-label">Total Revenue</div>
-            <div class="tm-value" style="color:var(--primary-blue)">₱1,032,050.00</div>
+            <div class="tm-value" style="color:var(--primary-blue)">${DH.fmtPHP(DB.metrics.revenue)}</div>
             <div style="font-size:0.72rem; color:var(--success); font-weight:700; margin-top:4px; display:flex; align-items:center; gap:4px;">
-              <span id="tm-rev-icon"></span> ▲ 13.45% Growth
+              <span id="tm-rev-icon"></span> ▲ ${DB.metrics.revenueGrowth}% Growth
             </div>
           </div>
 
           <div class="top-metric-card" style="cursor:pointer;" onclick="App.setNav('beds')">
             <div class="tm-label">Bed Occupancy Rate</div>
-            <div class="tm-value" style="color:var(--warning)">73.4%</div>
-            <div style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">166 Occupied / 226 Total</div>
+            <div class="tm-value" style="color:var(--warning)">${((DB.metrics.beds.occupied / (DB.metrics.beds.total || 1)) * 100).toFixed(1)}%</div>
+            <div style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">${DB.metrics.beds.occupied} Occupied / ${DB.metrics.beds.total} Total</div>
           </div>
 
           <div class="top-metric-card">
             <div class="tm-label">Pending Payments</div>
-            <div class="tm-value" style="color:var(--danger)">₱1,337,000.00</div>
+            <div class="tm-value" style="color:var(--danger)">${DH.fmtPHP(DB.metrics.pendingPayments)}</div>
             <div style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">Financial Accounts</div>
           </div>
         `)}
@@ -426,21 +429,21 @@ const App = {
               <span style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-dark);">
                 <span style="width:10px; height:10px; border-radius:50%; background:#94A3B8;"></span> Total Capacity
               </span>
-              <strong style="font-size:0.9rem;">${(isDoctor || isNurse) ? '37 Beds' : '226 Beds'}</strong>
+              <strong style="font-size:0.9rem;">${(isDoctor || isNurse) ? DB.beds.filter(b => b.roomId === 'R001').length : DB.metrics.beds.total} Beds</strong>
             </div>
 
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <span style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-dark);">
                 <span style="width:10px; height:10px; border-radius:50%; background:#16A34A;"></span> Occupied Beds
               </span>
-              <strong style="color:#16A34A; font-size:0.9rem;">${(isDoctor || isNurse) ? '35 Beds' : '166 Beds'}</strong>
+              <strong style="color:#16A34A; font-size:0.9rem;">${(isDoctor || isNurse) ? DB.beds.filter(b => b.roomId === 'R001' && b.status === 'occupied').length : DB.metrics.beds.occupied} Beds</strong>
             </div>
 
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <span style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-dark);">
                 <span style="width:10px; height:10px; border-radius:50%; background:#00BCD4;"></span> Available Beds
               </span>
-              <strong style="color:#00BCD4; font-size:0.9rem;">${(isDoctor || isNurse) ? '2 Beds' : '60 Beds'}</strong>
+              <strong style="color:#00BCD4; font-size:0.9rem;">${(isDoctor || isNurse) ? DB.beds.filter(b => b.roomId === 'R001' && b.status === 'available').length : DB.metrics.beds.available} Beds</strong>
             </div>
           </div>
         </div>
@@ -483,9 +486,9 @@ const App = {
             <div id="billing-donut-wrap"></div>
             <div style="margin-top:16px; padding-top:12px; border-top:1px solid #E2E8F0;">
               <div style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Pending Payments</div>
-              <div style="font-size:1.3rem; font-weight:800; color:var(--text-dark); margin-top:2px;">₱1,337,000.00</div>
+              <div style="font-size:1.3rem; font-weight:800; color:var(--text-dark); margin-top:2px;">${DH.fmtPHP(DB.metrics.pendingPayments)}</div>
               <div style="width:100%; height:6px; background:#E2E8F0; border-radius:3px; margin-top:8px; overflow:hidden;">
-                <div style="width:75%; height:100%; background:var(--primary-teal); border-radius:3px;"></div>
+                <div style="width:${(DB.metrics.revenue / ((DB.metrics.revenue + DB.metrics.pendingPayments) || 1) * 100).toFixed(0)}%; height:100%; background:var(--primary-teal); border-radius:3px;"></div>
               </div>
             </div>
           `)}
@@ -528,8 +531,8 @@ const App = {
       if (!isNurse && !isDoctor && document.getElementById('tm-opd-icon')) {
         document.getElementById('tm-opd-icon').innerHTML  = Icons.svg('users', 16, 'var(--primary-teal)');
         document.getElementById('tm-rev-icon').innerHTML  = Icons.svg('trendingUp', 12, '#166534');
-        document.getElementById('opd-sparkline-wrap').innerHTML   = Charts.opdSparkline();
-        document.getElementById('billing-donut-wrap').innerHTML    = Charts.billingDonut();
+        document.getElementById('opd-sparkline-wrap').innerHTML   = Charts.opdSparkline(DB.metrics.opdVisits);
+        document.getElementById('billing-donut-wrap').innerHTML    = Charts.billingDonut(DB.metrics.revenue, DB.metrics.pendingPayments);
       }
 
       if (document.getElementById('bed-hdr-icon')) document.getElementById('bed-hdr-icon').innerHTML = Icons.svg('bed', 18, 'var(--primary-teal)');
@@ -538,8 +541,12 @@ const App = {
       if (document.getElementById('btn-issue-icon'))document.getElementById('btn-issue-icon').innerHTML= Icons.svg('calendar', 16, '#475569');
       if (document.getElementById('bell-wrap'))     document.getElementById('bell-wrap').innerHTML    = Icons.svg('bell', 18, '#475569');
 
-      if (document.getElementById('bed-donut-wrap'))      document.getElementById('bed-donut-wrap').innerHTML      = Charts.bedStatusDonut((isDoctor || isNurse) ? 35 : 166, (isDoctor || isNurse) ? 2 : 60);
-      if (document.getElementById('admissions-chart-wrap')) document.getElementById('admissions-chart-wrap').innerHTML = Charts.admissionsTrend();
+      if (document.getElementById('bed-donut-wrap')) {
+        const occ = (isDoctor || isNurse) ? DB.beds.filter(b => b.roomId === 'R001' && b.status === 'occupied').length : DB.metrics.beds.occupied;
+        const av = (isDoctor || isNurse) ? DB.beds.filter(b => b.roomId === 'R001' && b.status === 'available').length : DB.metrics.beds.available;
+        document.getElementById('bed-donut-wrap').innerHTML = Charts.bedStatusDonut(occ, av);
+      }
+      if (document.getElementById('admissions-chart-wrap')) document.getElementById('admissions-chart-wrap').innerHTML = Charts.admissionsTrend(DB.admissions.length);
     }, 10);
   },
 
@@ -631,6 +638,24 @@ const App = {
     const p = DH.getPatient(pid);
     const type = document.getElementById('do-type').value;
     const details = document.getElementById('do-details').value;
+
+    if (type === 'Diagnostic Lab') {
+      const newOrder = {
+        id: DH.nextId('LAB-'),
+        patientId: p.id,
+        patientName: `${p.firstName} ${p.lastName}`,
+        testName: details,
+        dept: p.department || 'Medicine',
+        orderedBy: Auth.user.name || 'Dr. April Sunshine Pelias',
+        date: DH.now(),
+        status: 'Pending',
+        result: 'Specimen Collection Pending'
+      };
+      DB.labOrders.unshift(newOrder);
+      if (FB.isConfigured && FB.db) {
+        FB.db.collection('labOrders').doc(newOrder.id).set(newOrder).catch(err => console.error(err));
+      }
+    }
 
     this.closeModal();
     this.toast(`Physician order submitted for ${p.firstName} ${p.lastName}! (${type}: ${details})`, 'success');
@@ -799,6 +824,10 @@ const App = {
       DB.vitalSigns[existingIndex] = newVital;
     } else {
       DB.vitalSigns.unshift(newVital);
+    }
+
+    if (FB.isConfigured && FB.db) {
+      FB.db.collection('vitalSigns').doc(newVital.id).set(newVital).catch(err => console.error(err));
     }
 
     this.closeModal();
@@ -1251,7 +1280,7 @@ const App = {
 
     if (availBed) {
       availBed.status = 'occupied';
-      DB.admissions.unshift({
+      const admObj = {
         id: DH.nextId('ADM-'),
         patientId: pid,
         roomId: availBed.roomId,
@@ -1260,9 +1289,19 @@ const App = {
         admissionDate: todayStr,
         admissionReason: complaint,
         status: 'Admitted'
-      });
+      };
+      DB.admissions.unshift(admObj);
       DB.metrics.beds.occupied++;
       if (DB.metrics.beds.available > 0) DB.metrics.beds.available--;
+
+      if (FB.isConfigured && FB.db) {
+        FB.db.collection('beds').doc(availBed.id).update({ status: 'occupied' }).catch(err => console.error(err));
+        FB.db.collection('admissions').doc(admObj.id).set(admObj).catch(err => console.error(err));
+      }
+    }
+
+    if (FB.isConfigured && FB.db) {
+      FB.db.collection('patients').doc(newPatient.id).set(newPatient).catch(err => console.error(err));
     }
 
     this.closeModal();
@@ -1325,6 +1364,35 @@ const App = {
       setTimeout(() => t.remove(), 300);
     }, 3500);
   },
+
+  refreshActiveView () {
+    const mainView = document.getElementById('main-view');
+    if (!mainView) return;
+
+    switch (this.currentNav) {
+      case 'dashboard':
+        this.renderDashboard();
+        break;
+      case 'patients':
+        PatientsModule.render(mainView);
+        break;
+      case 'beds':
+        BedsModule.render(mainView);
+        break;
+      case 'doctors':
+        DoctorsModule.render(mainView);
+        break;
+      case 'lab':
+        LabModule.render(mainView);
+        break;
+      case 'pharmacy':
+        PharmacyModule.render(mainView);
+        break;
+      case 'users':
+        UsersModule.render(mainView);
+        break;
+    }
+  }
 };
 
-document.addEventListener('DOMContentLoaded', () => App.init());
+

@@ -3,26 +3,10 @@
    ============================================================ */
 
 const DoctorsModule = {
-  doctors: [
-    { id:'DOC-001', name:'Dr. April Sunshine L. Pelias', specialty:'OB-GYN / Internal Medicine', department:'Medicine & OB', email:'pelias@sttherese.ph', phone:'+63 917 123 4567', room:'Room 201', activePatients:12, schedule:'Mon - Fri (08:00 AM - 04:00 PM)', status:'Active' },
-    { id:'DOC-002', name:'Dr. Gedelene V. Doromal-Torres', specialty:'Cardiology & Critical Care', department:'Cardiology', email:'torres@sttherese.ph', phone:'+63 918 234 5678', room:'ICU Station A', activePatients:8, schedule:'Mon - Sat (09:00 AM - 05:00 PM)', status:'Active' },
-    { id:'DOC-003', name:'Dr. Ricardo Santos', specialty:'General & Laparoscopic Surgery', department:'Surgery', email:'santos@sttherese.ph', phone:'+63 919 345 6789', room:'OR Suite 2', activePatients:6, schedule:'Tue - Sun (07:00 AM - 03:00 PM)', status:'Active' },
-    { id:'DOC-004', name:'Dr. Maria Elena Cruz', specialty:'Pediatrics & Neonatology', department:'Pediatrics', email:'cruz@sttherese.ph', phone:'+63 920 456 7890', room:'Pediatric Ward 3', activePatients:10, schedule:'Mon - Fri (09:00 AM - 06:00 PM)', status:'Active' },
-  ],
-
-  consultations: [
-    { id: 'C001', doctorId: 'DOC-001', patientName: 'Evelyn Joyce Inson', patientId: 'IP26-001883', time: '10:30 AM', date: 'Today (Mon)', type: 'OB-GYN Consult', status: 'In Consultation', note: 'Threatened Abortion 15w - Bedside Ultrasound' },
-    { id: 'C002', doctorId: 'DOC-001', patientName: 'Arlni Smith', patientId: '0000350', time: '11:45 AM', date: 'Today (Mon)', type: 'Internal Medicine', status: 'Confirmed', note: 'Hypertension Follow-up & Electrolyte Review' },
-    { id: 'C003', doctorId: 'DOC-001', patientName: 'Juan Dela Cruz', patientId: 'P-2024-001', time: '01:30 PM', date: 'Today (Mon)', type: 'Post-Op Follow-up', status: 'Confirmed', note: 'Abdominal Dressing Check & Rx Adjustment' },
-
-    { id: 'C004', doctorId: 'DOC-002', patientName: 'Anoshy Womna', patientId: '0000450', time: '09:30 AM', date: 'Today (Mon)', type: 'Cardiology ECG', status: 'Confirmed', note: 'Rule out Arrythmia & 2D Echo' },
-    { id: 'C005', doctorId: 'DOC-002', patientName: 'John Smith', patientId: '0000520', time: '02:00 PM', date: 'Today (Mon)', type: 'ICU Rounds', status: 'Scheduled', note: 'Critical Care Inpatient Assessment' },
-
-    { id: 'C006', doctorId: 'DOC-003', patientName: 'Jonph Parhri', patientId: '0000430', time: '08:30 AM', date: 'Today (Mon)', type: 'Surgery Pre-Op', status: 'Confirmed', note: 'Laparoscopic Cholecystectomy Clearance' },
-    { id: 'C007', doctorId: 'DOC-004', patientName: 'Anoshy Womna', patientId: '0000450', time: '11:00 AM', date: 'Today (Mon)', type: 'Pediatric Check', status: 'Confirmed', note: 'Routine Pediatric Screening' },
-  ],
-
   render (container) {
+    const docList = DB.doctors || [];
+    const consultList = DB.consultations || [];
+
     container.innerHTML = `
       <!-- Top Page Header -->
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
@@ -38,7 +22,7 @@ const DoctorsModule = {
           <button class="btn-glass" onclick="App.renderDashboard()">
             ${Icons.svg('chevronLeft', 14)} Back to Dashboard
           </button>
-          <button class="btn-teal" onclick="App.toast('Doctor Roster Exported','success')">
+          <button class="btn-teal" onclick="DoctorsModule.exportRoster()">
             ${Icons.svg('fileText', 15)} Export Roster
           </button>
         </div>
@@ -46,8 +30,8 @@ const DoctorsModule = {
 
       <!-- Doctors Grid -->
       <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:20px;">
-        ${this.doctors.map(d => {
-          const docConsults = this.consultations.filter(c => c.doctorId === d.id);
+        ${docList.length === 0 ? `<div class="p-4 text-muted">No doctors found in directory.</div>` : docList.map(d => {
+          const docConsults = consultList.filter(c => c.doctorId === d.id);
           return `
             <div class="analytics-card" style="padding:20px;">
               <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid #E2E8F0;">
@@ -86,10 +70,33 @@ const DoctorsModule = {
     `;
   },
 
+  exportRoster () {
+    const list = DB.doctors || [];
+    if (list.length === 0) {
+      App.toast('No doctors to export', 'error');
+      return;
+    }
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + ["Doctor ID,Name,Specialty,Department,Room,Duty Schedule,Phone,Email,Status"]
+        .concat(list.map(d => `"${d.id}","${d.name}","${d.specialty}","${d.department}","${d.room}","${d.schedule}","${d.phone}","${d.email}","${d.status}"`))
+        .join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `St_Therese_Doctor_Roster_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    App.toast('Doctor Roster CSV downloaded successfully!', 'success');
+  },
+
   /* ── Interactive Consultation Schedule & Appointments Modal ── */
   openScheduleModal (docId) {
-    const d = this.doctors.find(doc => doc.id === docId) || this.doctors[0];
-    const docConsults = this.consultations.filter(c => c.doctorId === d.id);
+    const docList = DB.doctors || [];
+    const consultList = DB.consultations || [];
+    const d = docList.find(doc => doc.id === docId) || docList[0];
+    if (!d) return;
+    const docConsults = consultList.filter(c => c.doctorId === d.id);
 
     App.modal(`
       ${App.modalHeader(`Consultation Schedule & Orders: ${d.name}`, 'calendar')}
@@ -192,7 +199,8 @@ const DoctorsModule = {
 
   /* ── Book Consultation Modal ───────────────────────────────── */
   openBookAppointmentModal (docId) {
-    const d = this.doctors.find(doc => doc.id === docId) || this.doctors[0];
+    const docList = DB.doctors || [];
+    const d = docList.find(doc => doc.id === docId) || docList[0];
     const patients = DB.patients;
 
     App.modal(`
@@ -246,7 +254,8 @@ const DoctorsModule = {
 
   saveAppointment (e, docId) {
     e.preventDefault();
-    const d = this.doctors.find(doc => doc.id === docId);
+    const docList = DB.doctors || [];
+    const d = docList.find(doc => doc.id === docId);
     const patVal = document.getElementById('ba-patient').value.split('|');
     const pid = patVal[0];
     const pname = patVal[1];
@@ -256,7 +265,7 @@ const DoctorsModule = {
     const note = document.getElementById('ba-note').value;
 
     const newAppt = {
-      id: 'C' + String(this.consultations.length + 1).padStart(3, '0'),
+      id: 'C' + String((DB.consultations || []).length + 1).padStart(3, '0'),
       doctorId: docId,
       patientName: pname,
       patientId: pid,
@@ -267,11 +276,16 @@ const DoctorsModule = {
       note: note
     };
 
-    this.consultations.push(newAppt);
+    if (!DB.consultations) DB.consultations = [];
+    DB.consultations.push(newAppt);
+
+    if (FB.isConfigured && FB.db) {
+      FB.db.collection('consultations').doc(newAppt.id).set(newAppt).catch(err => console.error(err));
+    }
+
     App.toast(`Consultation booked with ${d.name} for ${pname} at ${time}!`, 'success');
 
     // Re-open schedule modal with updated roster
     this.openScheduleModal(docId);
   }
 };
-

@@ -78,6 +78,26 @@ const UsersModule = {
       const isSuspended = u.status === 'Suspended';
       const avatarBg = u.role === 'admin' ? 'linear-gradient(135deg, #475569, #1E293B)' : (u.role === 'doctor' ? 'linear-gradient(135deg, #0288D1, #00A896)' : (u.role === 'nurse' ? 'linear-gradient(135deg, #00A896, #0288D1)' : 'linear-gradient(135deg, #0D9488, #0288D1)'));
 
+      const deptMap = {
+        administration: "Administration & IT",
+        medicine: "Internal Medicine",
+        cardiology: "Cardiology & Critical Care",
+        obgyn: "OB-GYN",
+        pediatrics: "Pediatrics",
+        surgery: "Surgery",
+        laboratory: "Laboratory & Diagnostics",
+        emergency: "Emergency Department",
+        pharmacy: "Pharmacy"
+      };
+      const instMap = {
+        main: "Main Center",
+        specialty: "Specialty Clinic",
+        er: "Emergency Center",
+        "health-system": "Health System"
+      };
+      const deptLabel = deptMap[u.department] || u.department || 'General Staff';
+      const instLabel = instMap[u.institution] || u.institution || 'Main Center';
+
       return `
         <tr>
           <td>
@@ -96,7 +116,7 @@ const UsersModule = {
               ${Auth.roleLabel(u.role)}
             </span>
           </td>
-          <td style="font-size:0.82rem; font-weight:600; color:var(--text-secondary);">${u.department || u.ward || u.specialty || 'General Hospital Staff'}</td>
+          <td style="font-size:0.82rem; font-weight:600; color:var(--text-secondary);">${deptLabel} · ${instLabel}</td>
           <td>
             <span class="badge-status ${isSuspended ? 'badge-suspended' : 'badge-admitted'}" style="font-weight:700; font-size:0.75rem;">
               ${isSuspended ? 'Suspended' : 'Active'}
@@ -173,9 +193,30 @@ const UsersModule = {
             </div>
           </div>
 
-          <div style="margin-bottom:14px;">
-            <label class="form-label">Department / Assigned Ward / Room</label>
-            <input class="form-control-input" id="um-dept" value="${u ? (u.department || u.ward || u.specialty || '') : ''}" placeholder="e.g. Station A Ward 2001 / OB-GYN Room 201">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+            <div>
+              <label class="form-label">Department *</label>
+              <select class="form-control-select" id="um-dept" required>
+                <option value="administration" ${u && u.department === 'administration' ? 'selected' : ''}>Administration & IT</option>
+                <option value="medicine" ${u && u.department === 'medicine' ? 'selected' : ''}>Internal Medicine</option>
+                <option value="cardiology" ${u && u.department === 'cardiology' ? 'selected' : ''}>Cardiology & Critical Care</option>
+                <option value="obgyn" ${u && u.department === 'obgyn' ? 'selected' : ''}>OB-GYN</option>
+                <option value="pediatrics" ${u && u.department === 'pediatrics' ? 'selected' : ''}>Pediatrics</option>
+                <option value="surgery" ${u && u.department === 'surgery' ? 'selected' : ''}>Surgery</option>
+                <option value="laboratory" ${u && u.department === 'laboratory' ? 'selected' : ''}>Laboratory & Diagnostics</option>
+                <option value="emergency" ${u && u.department === 'emergency' ? 'selected' : ''}>Emergency Department</option>
+                <option value="pharmacy" ${u && u.department === 'pharmacy' ? 'selected' : ''}>Pharmacy</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Institution *</label>
+              <select class="form-control-select" id="um-institution" required>
+                <option value="main" ${u && u.institution === 'main' ? 'selected' : ''}>St. Therese Main Medical Center</option>
+                <option value="specialty" ${u && u.institution === 'specialty' ? 'selected' : ''}>St. Therese Specialty Clinic</option>
+                <option value="er" ${u && u.institution === 'er' ? 'selected' : ''}>St. Therese Emergency Center</option>
+                <option value="health-system" ${u && u.institution === 'health-system' ? 'selected' : ''}>St. Therese Health System</option>
+              </select>
+            </div>
           </div>
 
           <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px; padding-top:14px; border-top:1px solid #E2E8F0;">
@@ -189,13 +230,14 @@ const UsersModule = {
     `, 'modal-md');
   },
 
-  saveUser (e, userId) {
+  async saveUser (e, userId) {
     e.preventDefault();
     const name = document.getElementById('um-name').value;
     const email = document.getElementById('um-email').value;
     const pass = document.getElementById('um-pass').value;
     const role = document.getElementById('um-role').value;
     const dept = document.getElementById('um-dept').value;
+    const inst = document.getElementById('um-institution').value;
 
     if (userId) {
       const u = DB.users.find(x => x.id === userId);
@@ -205,7 +247,11 @@ const UsersModule = {
         u.password = pass;
         u.role = role;
         u.department = dept;
+        u.institution = inst;
         u.avatar = name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+        if (FB.isConfigured && FB.db) {
+          FB.db.collection('users').doc(u.id).set(u).catch(err => console.error(err));
+        }
       }
       App.toast(`Account for ${name} updated successfully!`, 'success');
     } else {
@@ -216,11 +262,34 @@ const UsersModule = {
         password: pass,
         role: role,
         department: dept,
+        institution: inst,
         status: 'Active',
         avatar: name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()
       };
-      DB.users.push(newUser);
-      App.toast(`New account created for ${name} (${Auth.roleLabel(role)})!`, 'success');
+      
+      if (FB.isConfigured && FB.db) {
+        App.toast('Creating Firebase Auth account...', 'info');
+        try {
+          // Initialize a secondary Firebase app instance to avoid logging out the current admin
+          const tempApp = firebase.initializeApp(firebaseConfig, "TempAppUserCreator");
+          const credential = await tempApp.auth().createUserWithEmailAndPassword(email, pass);
+          const fbUser = credential.user;
+          await tempApp.delete();
+
+          // Set user document using the newly created Auth UID
+          newUser.id = fbUser.uid;
+          await FB.db.collection('users').doc(fbUser.uid).set(newUser);
+          DB.users.push(newUser);
+          App.toast(`New account created for ${name} (${Auth.roleLabel(role)})!`, 'success');
+        } catch (err) {
+          console.error("Firebase User Auth Creation Error:", err);
+          App.toast(`Auth Error: ${err.message}`, 'error');
+          return; // Stop execution on error
+        }
+      } else {
+        DB.users.push(newUser);
+        App.toast(`New account created locally for ${name} (${Auth.roleLabel(role)})!`, 'success');
+      }
     }
 
     App.closeModal();
@@ -261,7 +330,12 @@ const UsersModule = {
     e.preventDefault();
     const u = DB.users.find(x => x.id === userId);
     const newPass = document.getElementById('reset-pass-val').value;
-    if (u) u.password = newPass;
+    if (u) {
+      u.password = newPass;
+      if (FB.isConfigured && FB.db) {
+        FB.db.collection('users').doc(u.id).update({ password: newPass }).catch(err => console.error(err));
+      }
+    }
 
     App.closeModal();
     App.toast(`Password reset for ${u.name}! New password: ${newPass}`, 'success');
@@ -273,6 +347,9 @@ const UsersModule = {
     const u = DB.users.find(x => x.id === userId);
     if (!u) return;
     u.status = u.status === 'Suspended' ? 'Active' : 'Suspended';
+    if (FB.isConfigured && FB.db) {
+      FB.db.collection('users').doc(u.id).update({ status: u.status }).catch(err => console.error(err));
+    }
     App.toast(`Account status for ${u.name} set to ${u.status}!`, u.status === 'Active' ? 'success' : 'warning');
     const mainView = document.getElementById('main-view');
     if (mainView) this.render(mainView);

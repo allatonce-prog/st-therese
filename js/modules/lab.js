@@ -3,14 +3,9 @@
    ============================================================ */
 
 const LabModule = {
-  labOrders: [
-    { id:'LAB-2026-081', patientId:'IP26-001883', patientName:'EVELYN JOYCE INSON', testName:'Obstetric Ultrasound & HCG Level', dept:'OB-GYN / DR Suite', orderedBy:'Dr. April Sunshine Pelias', date:'19 Jul 2026 22:30', status:'Completed', result:'Threatened abortion 15wks. HCG 45,000 mIU/mL' },
-    { id:'LAB-2026-082', patientId:'0000350', patientName:'Arlni Smith', testName:'Complete Blood Count (CBC) & CRP', dept:'Emergency Care', orderedBy:'Dr. April Sunshine Pelias', date:'18 May 2026 09:15', status:'Completed', result:'WBC 14.2 x10^9/L (Leukocytosis), CRP 45 mg/L' },
-    { id:'LAB-2026-083', patientId:'P-2024-001', patientName:'JUAN DELA CRUZ', testName:'Serum Electrolytes & Lipid Panel', dept:'Internal Medicine', orderedBy:'Dr. Gedelene Torres', date:'10 Jan 2026 14:30', status:'Processing', result:'Pending Laboratory Analysis' },
-    { id:'LAB-2026-084', patientId:'0000450', patientName:'Anoshy Womna', testName:'Urinalysis & Blood Chemistry', dept:'Pediatrics / OB', orderedBy:'Dr. April Sunshine Pelias', date:'18 May 2026 11:00', status:'Pending', result:'Specimen Collected' },
-  ],
-
   render (container) {
+    const list = DB.labOrders || [];
+
     container.innerHTML = `
       <!-- Top Page Header -->
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
@@ -26,7 +21,7 @@ const LabModule = {
           <button class="btn-glass" onclick="App.renderDashboard()">
             ${Icons.svg('chevronLeft', 14)} Back to Dashboard
           </button>
-          <button class="btn-teal" onclick="App.toast('New Lab Request Requisition Form Created','success')">
+          <button class="btn-teal" onclick="App.toast('Demo Mode: Write lab order from the Patient Consultation panel','info')">
             ${Icons.svg('plus', 15)} + New Lab Request
           </button>
         </div>
@@ -48,7 +43,7 @@ const LabModule = {
               </tr>
             </thead>
             <tbody>
-              ${this.labOrders.map(o => `
+              ${list.length === 0 ? `<tr><td colspan="7" class="text-center p-4 text-muted">No diagnostic orders found.</td></tr>` : list.map(o => `
                 <tr ondblclick="App.promptSecurityCheck('${o.patientId}')" title="Double click to view patient record">
                   <td><span style="font-family:monospace; font-weight:800; color:var(--primary-blue);">${o.id}</span></td>
                   <td>
@@ -61,7 +56,7 @@ const LabModule = {
                   <td>
                     <span class="badge-status ${o.status === 'Completed' ? 'bs-discharged' : (o.status === 'Processing' ? 'bs-admitted' : 'bs-critical')}">${o.status}</span>
                   </td>
-                  <td style="font-size:0.82rem; font-weight:600; color:var(--text-dark);">${o.result}</td>
+                  <td style="font-size:0.82rem; font-weight:600; color:var(--text-dark);">${o.result || 'Pending Result'}</td>
                 </tr>
               `).join('')}
             </tbody>

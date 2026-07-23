@@ -15,11 +15,11 @@
 </head>
 <body>
 
-  <!-- Minimalist Split Card Modal Container -->
-  <div class="login-card-modal">
+  <!-- Fullscreen Layout Container (No Floating Panel/Card) -->
+  <div class="login-fullscreen-container">
 
-    <!-- LEFT PANEL: VECTOR GRADIENT HERO CARD (NO PHOTO IMAGES) -->
-    <div class="brand-left-panel">
+    <!-- LEFT SIDE: FULL-HEIGHT HERO SECTION -->
+    <div class="brand-hero-section">
       <div class="brand-hero-top">
         <div class="pill-brand-badge">
           <span id="hero-logo-icon"></span>
@@ -39,86 +39,93 @@
       </div>
     </div>
 
-    <!-- RIGHT PANEL: MINIMALIST CLEAN FORM (MATCHING REFERENCE UI) -->
-    <div class="form-right-panel">
-      
-      <!-- Top Pill Logo Icon -->
-      <div class="form-header-center">
-        <div style="width:48px; height:48px; margin:0 auto 10px; border-radius:50%; background:linear-gradient(135deg, #0288D1, #00A896); display:flex; align-items:center; justify-content:center; color:#FFF;" id="top-pill-logo"></div>
-        <h2>Login</h2>
-        <p>Log in to your hospital account</p>
+    <!-- RIGHT SIDE: CLEAN MINIMALIST FORM SECTION -->
+    <div class="login-form-section">
+      <div class="login-form-wrapper">
+        
+        <!-- Header -->
+        <div class="form-header-center">
+          <div style="width:48px; height:48px; margin:0 auto 12px; border-radius:50%; background:linear-gradient(135deg, #0288D1, #00A896); display:flex; align-items:center; justify-content:center; color:#FFF;" id="top-pill-logo"></div>
+          <h2>Login</h2>
+          <p>Log in to your hospital account</p>
+        </div>
+
+        <!-- Alert Box -->
+        <div class="alert-msg" id="alert-box"></div>
+
+        <form id="login-form" onsubmit="LoginApp.handleLogin(event)">
+          <!-- Username Input -->
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input type="text" id="login-username" class="pill-input" required placeholder="Enter your username" value="admin">
+          </div>
+
+          <!-- Password Input -->
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="login-password" class="pill-input" required placeholder="Enter your password" value="admin">
+            <a href="#" onclick="alert('Demo Mode: Please contact St. Therese System Administrator.')" class="forgot-link">Forgot Password?</a>
+          </div>
+
+          <!-- Department Dropdown -->
+          <div class="form-group">
+            <label class="form-label">Department</label>
+            <select id="login-department" class="pill-select" required>
+              <option value="administration">Administration & IT</option>
+              <option value="medicine">Internal Medicine</option>
+              <option value="cardiology">Cardiology & Critical Care</option>
+              <option value="obgyn">OB-GYN</option>
+              <option value="pediatrics">Pediatrics</option>
+              <option value="surgery">Surgery</option>
+              <option value="laboratory">Laboratory & Diagnostics</option>
+              <option value="emergency">Emergency Department</option>
+              <option value="pharmacy">Pharmacy</option>
+            </select>
+          </div>
+
+          <!-- Institution Dropdown -->
+          <div class="form-group">
+            <label class="form-label">Institution</label>
+            <select id="login-institution" class="pill-select" required>
+              <option value="main">St. Therese Main Medical Center</option>
+              <option value="specialty">St. Therese Specialty Clinic</option>
+              <option value="er">St. Therese Emergency Center</option>
+              <option value="health-system">St. Therese Health System</option>
+            </select>
+          </div>
+
+          <!-- Main Pill Action Button -->
+          <button type="submit" class="btn-pill-submit">
+            Log In
+          </button>
+
+          <!-- Secondary SSO Button -->
+          <button type="button" class="btn-pill-sso" onclick="LoginApp.autofill('admin', 'admin', 'administration', 'main')">
+            <span id="sso-shield-icon"></span> Sign In with Hospital SSO
+          </button>
+        </form>
+
+        <!-- Quick Demo Login Shortcuts -->
+        <div class="demo-bar">
+          <div class="demo-title">Quick Demo Login Shortcuts</div>
+          <div class="demo-btns">
+            <button class="demo-btn" onclick="LoginApp.autofill('admin', 'admin', 'administration', 'main')">Admin User</button>
+            <button class="demo-btn" onclick="LoginApp.autofill('doctor@sttherese.ph', 'doc123', 'obgyn', 'main')">Dr. Pelias</button>
+            <button class="demo-btn" onclick="LoginApp.autofill('nurse@sttherese.ph', 'nurse123', 'medicine', 'main')">RN Santos</button>
+          </div>
+        </div>
+
       </div>
-
-      <!-- Alert Box -->
-      <div class="alert-msg" id="alert-box"></div>
-
-      <form id="login-form" onsubmit="LoginApp.handleLogin(event)">
-        <!-- Username Input -->
-        <div class="form-group">
-          <label class="form-label">Username</label>
-          <input type="text" id="login-username" class="pill-input" required placeholder="Enter your username" value="admin">
-        </div>
-
-        <!-- Password Input -->
-        <div class="form-group">
-          <label class="form-label">Password</label>
-          <input type="password" id="login-password" class="pill-input" required placeholder="Enter your password" value="admin">
-          <a href="#" onclick="alert('Demo Mode: Please contact St. Therese System Administrator.')" class="forgot-link">Forgot Password?</a>
-        </div>
-
-        <!-- Department Dropdown -->
-        <div class="form-group">
-          <label class="form-label">Department</label>
-          <select id="login-department" class="pill-select" required>
-            <option value="administration">Administration & IT</option>
-            <option value="medicine">Internal Medicine</option>
-            <option value="cardiology">Cardiology & Critical Care</option>
-            <option value="obgyn">OB-GYN</option>
-            <option value="pediatrics">Pediatrics</option>
-            <option value="surgery">Surgery</option>
-            <option value="laboratory">Laboratory & Diagnostics</option>
-            <option value="emergency">Emergency Department</option>
-            <option value="pharmacy">Pharmacy</option>
-          </select>
-        </div>
-
-        <!-- Institution Dropdown -->
-        <div class="form-group">
-          <label class="form-label">Institution</label>
-          <select id="login-institution" class="pill-select" required>
-            <option value="main">St. Therese Main Medical Center</option>
-            <option value="specialty">St. Therese Specialty Clinic</option>
-            <option value="er">St. Therese Emergency Center</option>
-            <option value="health-system">St. Therese Health System</option>
-          </select>
-        </div>
-
-        <!-- Main Pill Action Button -->
-        <button type="submit" class="btn-pill-submit">
-          Log In
-        </button>
-
-        <!-- Secondary SSO Button -->
-        <button type="button" class="btn-pill-sso" onclick="LoginApp.autofill('admin', 'admin', 'administration', 'main')">
-          <span id="sso-shield-icon"></span> Sign In with Hospital SSO
-        </button>
-      </form>
-
-      <!-- Quick Demo Login Shortcuts -->
-      <div class="demo-bar">
-        <div class="demo-title">Quick Demo Login Shortcuts</div>
-        <div class="demo-btns">
-          <button class="demo-btn" onclick="LoginApp.autofill('admin', 'admin', 'administration', 'main')">Admin User</button>
-          <button class="demo-btn" onclick="LoginApp.autofill('doctor@sttherese.ph', 'doc123', 'obgyn', 'main')">Dr. Pelias</button>
-          <button class="demo-btn" onclick="LoginApp.autofill('nurse@sttherese.ph', 'nurse123', 'medicine', 'main')">RN Santos</button>
-        </div>
-      </div>
-
     </div>
 
   </div>
 
   <!-- JavaScript Modules -->
+  <!-- Firebase SDK Compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
   <script src="js/icons.js"></script>
   <script src="js/data.js"></script>
   <script src="js/auth.js"></script>
@@ -143,23 +150,23 @@
         this.showAlert('Demo credentials filled!', 'success');
       },
 
-      handleLogin (e) {
+      async handleLogin (e) {
         e.preventDefault();
         const username = document.getElementById('login-username').value;
         const pass     = document.getElementById('login-password').value;
         const dept     = document.getElementById('login-department').value;
         const inst     = document.getElementById('login-institution').value;
 
-        const res = Auth.login(username, pass);
+        const res = await Auth.login(username, pass);
         if (res.success) {
-          localStorage.setItem('st_user_dept', dept);
-          localStorage.setItem('st_user_inst', inst);
+          localStorage.setItem('st_user_dept', res.user.department || dept);
+          localStorage.setItem('st_user_inst', res.user.institution || inst);
           this.showAlert(`Welcome back, ${res.user.name}! Authenticating...`, 'success');
           setTimeout(() => {
             window.location.href = 'index.html';
           }, 600);
         } else {
-          this.showAlert('❌ Invalid Credentials: Check username and password.', 'error');
+          this.showAlert(`❌ Authentication failed: ${res.message || 'Check username and password.'}`, 'error');
         }
       },
 

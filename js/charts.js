@@ -6,7 +6,14 @@
 const Charts = {
 
   /* ──────────── OPD Sparkline Chart ──────────── */
-  opdSparkline () {
+  opdSparkline (visits = 0) {
+    if (visits === 0) {
+      return `<svg viewBox="0 0 240 60" width="100%" height="60" style="overflow:visible;">
+        <line x1="0" y1="30" x2="240" y2="30" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <text x="120" y="46" font-size="10" fill="#94A3B8" text-anchor="middle" font-family="Inter, sans-serif">No visits recorded</text>
+      </svg>`;
+    }
+
     return `<svg viewBox="0 0 240 60" width="100%" height="60" style="overflow:visible;">
       <defs>
         <linearGradient id="opdGrad" x1="0" y1="0" x2="0" y2="1">
@@ -21,15 +28,32 @@ const Charts = {
   },
 
   /* ──────────── Bed Status Donut Ring ──────────── */
-  bedStatusDonut (occupied = 166, available = 60) {
+  bedStatusDonut (occupied = 0, available = 0) {
     const total = occupied + available;
+    if (total === 0) {
+      return `<div style="position:relative; width:120px; height:120px; margin:0 auto;">
+        <svg viewBox="0 0 100 100" width="120" height="120">
+          <circle cx="50" cy="50" r="38" fill="none" stroke="#E2E8F0" stroke-width="12"/>
+        </svg>
+        <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+          <span style="font-size:1.1rem; font-weight:800; color:var(--text-muted); line-height:1.1">0</span>
+          <span style="font-size:0.65rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Beds</span>
+        </div>
+      </div>`;
+    }
+
+    const occupiedPercent = occupied / total;
+    const availablePercent = available / total;
+    const occupiedOffset = 238.7 * (1 - occupiedPercent);
+    const availableOffset = 238.7 * (1 - availablePercent);
+
     return `<div style="position:relative; width:120px; height:120px; margin:0 auto;">
       <svg viewBox="0 0 100 100" width="120" height="120">
         <circle cx="50" cy="50" r="38" fill="none" stroke="#E2E8F0" stroke-width="12"/>
         <circle cx="50" cy="50" r="38" fill="none" stroke="#16A34A" stroke-width="12"
-          stroke-dasharray="238.7" stroke-dashoffset="65" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+          stroke-dasharray="238.7" stroke-dashoffset="${occupiedOffset}" stroke-linecap="round" transform="rotate(-90 50 50)"/>
         <circle cx="50" cy="50" r="38" fill="none" stroke="#00BCD4" stroke-width="12"
-          stroke-dasharray="238.7" stroke-dashoffset="180" stroke-linecap="round" transform="rotate(70 50 50)"/>
+          stroke-dasharray="238.7" stroke-dashoffset="${availableOffset}" stroke-linecap="round" transform="rotate(${(occupiedPercent * 360) - 90} 50 50)"/>
       </svg>
       <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
         <span style="font-size:1.1rem; font-weight:800; color:var(--text-dark); line-height:1.1">${total}</span>
@@ -39,7 +63,14 @@ const Charts = {
   },
 
   /* ──────────── Patient Admissions Trend Chart ──────────── */
-  admissionsTrend () {
+  admissionsTrend (count = 0) {
+    if (count === 0) {
+      return `<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:220px; background:#F8FAFC; border:1px dashed #CBD5E1; border-radius:12px; color:var(--text-muted);">
+        <span>${Icons.svg('activity', 32, '#94A3B8')}</span>
+        <span style="font-size:0.85rem; font-weight:600; margin-top:8px;">No admissions trends recorded</span>
+      </div>`;
+    }
+
     return `<svg viewBox="0 0 680 220" width="100%" height="220" style="overflow:visible;">
       <defs>
         <linearGradient id="areaGrad1" x1="0" y1="0" x2="0" y2="1">
@@ -90,12 +121,28 @@ const Charts = {
   },
 
   /* ──────────── Billing Summary Donut ──────────── */
-  billingDonut () {
+  billingDonut (revenue = 0, pending = 0) {
+    const total = revenue + pending;
+    if (total === 0) {
+      return `<div style="position:relative; width:130px; height:130px; margin:0 auto;">
+        <svg viewBox="0 0 100 100" width="130" height="130">
+          <circle cx="50" cy="50" r="38" fill="none" stroke="#E2E8F0" stroke-width="14"/>
+        </svg>
+        <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+          <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted); font-family:sans-serif;">₱0.00</span>
+        </div>
+      </div>`;
+    }
+
+    const revPercent = revenue / total;
+    const pendPercent = pending / total;
+    const revOffset = 238.7 * (1 - revPercent);
+    const pendOffset = 238.7 * (1 - pendPercent);
+
     return `<div style="position:relative; width:130px; height:130px; margin:0 auto;">
       <svg viewBox="0 0 100 100" width="130" height="130">
-        <circle cx="50" cy="50" r="38" fill="none" stroke="#0288D1" stroke-width="14" stroke-dasharray="238.7" stroke-dashoffset="70" transform="rotate(-90 50 50)"/>
-        <circle cx="50" cy="50" r="38" fill="none" stroke="#00A896" stroke-width="14" stroke-dasharray="238.7" stroke-dashoffset="150" transform="rotate(30 50 50)"/>
-        <circle cx="50" cy="50" r="38" fill="none" stroke="#F59E0B" stroke-width="14" stroke-dasharray="238.7" stroke-dashoffset="200" transform="rotate(160 50 50)"/>
+        <circle cx="50" cy="50" r="38" fill="none" stroke="#0288D1" stroke-width="14" stroke-dasharray="238.7" stroke-dashoffset="${revOffset}" transform="rotate(-90 50 50)"/>
+        <circle cx="50" cy="50" r="38" fill="none" stroke="#F59E0B" stroke-width="14" stroke-dasharray="238.7" stroke-dashoffset="${pendOffset}" transform="rotate(${(revPercent * 360) - 90} 50 50)"/>
       </svg>
       <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
         <span style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Summary</span>
@@ -190,7 +237,7 @@ const Charts = {
       <circle cx="530" cy="148" r="4" fill="#DC2626" stroke="#FFF" stroke-width="1.5"/>
       <circle cx="680" cy="142" r="5" fill="#DC2626" stroke="#FFF" stroke-width="2"/>
 
-      <!-- Annotated Interval Box & Arrow (matching reference callout box style!) -->
+      <!-- Annotated Interval Box & Arrow -->
       <line x1="530" y1="58" x2="680" y2="58" stroke="#DC2626" stroke-width="3" marker-start="url(#intervalArrowLeft)" marker-end="url(#intervalArrowRight)"/>
       
       <g transform="translate(605, 14)">
@@ -198,15 +245,6 @@ const Charts = {
         <text x="0" y="14" fill="#FFFFFF" font-size="10" font-weight="800" text-anchor="middle" font-family="Inter, sans-serif">Interval Checkpoint</text>
         <text x="0" y="27" fill="#38BDF8" font-size="9" font-weight="700" text-anchor="middle" font-family="Inter, sans-serif">BP 110/70 · HR 84 bpm</text>
       </g>
-
-      <!-- Bottom Clinical Status Bar -->
-      <g transform="translate(0, 224)">
-        <rect width="760" height="26" fill="#0F172A"/>
-        <text x="16" y="17" fill="#F8FAFC" font-size="10" font-weight="700" font-family="Inter, sans-serif">
-          Clinical Vital Status: <tspan fill="#4ADE80" font-weight="800">Normal Hemodynamics</tspan> · <tspan fill="#94A3B8">BP 110/70 mmHg | Pulse 84 bpm | SpO₂ 98% | Temp 36.7°C</tspan>
-        </text>
-        <text x="744" y="17" fill="#94A3B8" font-size="9" font-weight="600" text-anchor="end" font-family="monospace">Logged: 22:30</text>
-      </g>
     </svg>`;
-  },
+  }
 };
