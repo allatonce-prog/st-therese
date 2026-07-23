@@ -99,7 +99,13 @@ const BedsModule = {
               <div style="font-size:0.7rem; font-weight:800; color:var(--primary-teal); text-transform:uppercase; letter-spacing:0.06em;">${room.department} · Floor ${room.floor}</div>
               <h4 style="font-size:1.1rem; font-weight:800; color:var(--text-dark); margin-top:2px;">${room.name}</h4>
             </div>
-            <span class="badge-status ${room.type === 'Intensive' ? 'bs-critical' : 'bs-admitted'}">${room.type}</span>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+              <span class="badge-status ${room.type === 'Intensive' ? 'bs-critical' : 'bs-admitted'}">${room.type}</span>
+              <div style="display:flex; gap:6px; margin-top:2px;">
+                <button class="btn-glass" style="padding:2px 6px; font-size:0.7rem; border-radius:4px;" onclick="event.stopPropagation(); BedsModule.openEditRoomModal('${room.id}')" title="Edit Ward">Edit</button>
+                <button class="btn-glass" style="padding:2px 6px; font-size:0.7rem; border-radius:4px; color:var(--danger);" onclick="event.stopPropagation(); BedsModule.deleteRoom('${room.id}')" title="Delete Ward">Delete</button>
+              </div>
+            </div>
           </div>
 
           <!-- Room Occupancy Stats Bar -->
@@ -117,8 +123,8 @@ const BedsModule = {
               const isOccupied = bed.status === 'occupied';
 
               return `
-                <div onclick="${isOccupied ? `BedsModule.inspectBedOccupant('${bed.id}', '${patient.id}')` : `App.openIntakeWizardModal()`}"
-                     title="${isOccupied ? `Occupied by ${patient.firstName} ${patient.lastName} (${patient.id}) — Click to view file` : `Bed ${bed.number} Available — Click to admit patient`}"
+                <div onclick="${isOccupied ? `BedsModule.inspectBedOccupant('${bed.id}', '${patient.id}')` : `BedsModule.openBedActionsModal('${bed.id}')`}"
+                     title="${isOccupied ? `Occupied by ${patient.firstName} ${patient.lastName} (${patient.id}) — Click to view file` : `Bed ${bed.number} Available — Click for options`}"
                      style="background:${isOccupied ? '#F0FDF4' : '#E0F2FE'}; border:1.5px solid ${isOccupied ? '#86EFAC' : '#7DD3FC'}; border-radius:8px; padding:10px 8px; text-align:center; cursor:pointer; transition:var(--transition); position:relative;">
                   
                   <div style="font-size:0.65rem; font-weight:800; color:${isOccupied ? '#166534' : '#0369A1'}; text-transform:uppercase;">Bed ${bed.number}</div>
@@ -369,6 +375,199 @@ const BedsModule = {
     App.closeModal();
 
     // Re-render Bed & Ward System page
+    const mainView = document.getElementById('main-view');
+    if (mainView) BedsModule.render(mainView);
+  },
+
+  openBedActionsModal (bedId) {
+    const bed = DH.getBed(bedId);
+    const room = bed ? DH.getRoom(bed.roomId) : null;
+    if (!bed) return;
+
+    App.modal(`
+      ${App.modalHeader(`Bed Actions: Bed ${bed.number}`, 'bed')}
+      <div class="modal-body" style="padding:18px 22px; text-align:center;">
+        <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:18px;">
+          Select an action for Bed <strong>${bed.number}</strong> in <strong>${room ? room.name : 'ward'}</strong>.
+        </p>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <button class="btn-teal" style="width:100%; justify-content:center; padding:12px;" onclick="App.closeModal(); App.openIntakeWizardModal()">
+            ${Icons.svg('plus', 16)} Admit New Patient to Bed ${bed.number}
+          </button>
+          <button class="btn-glass" style="width:100%; justify-content:center; padding:12px; color:var(--danger); border-color:var(--danger);" onclick="BedsModule.deleteBed('${bed.id}')">
+            ${Icons.svg('lock', 16, 'var(--danger)')} Delete Bed ${bed.number}
+          </button>
+        </div>
+      </div>
+    `, 'modal-md');
+  },
+
+  async deleteBed (bedId) {
+    const bed = DH.getBed(bedId);
+    if (!bed) return;
+
+    if (bed.status === 'occupied') {
+      App.toast('Cannot delete an occupied bed! Discharge the patient first.', 'error');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete Bed ${bed.number}?`)) return;
+
+    const index = DB.beds.findIndex(b => b.id === bedId);
+    if (index > -1) {
+      DB.beds.splice(index, 1);
+    }
+
+    const room = DB.rooms.find(r => r.id === bed.roomId);
+    if (room) {
+      room.totalBeds = Math.max(0, (room.totalBeds || 1) - 1);
+      if (FB.isConfigured && FB.db) {
+        FB.db.collection('rooms').doc(room.id).update({ totalBeds: room.totalBeds }).catch(err => console.error(err));
+      }
+    }
+
+    DB.metrics.beds.total = Math.max(0, (DB.metrics.beds.total || 1) - 1);
+    DB.metrics.beds.available = Math.max(0, (DB.metrics.beds.available || 1) - 1);
+
+    if (FB.isConfigured && FB.db) {
+      try {
+        await FB.db.collection('beds').doc(bedId).delete();
+        App.toast(`Bed ${bed.number} deleted successfully!`, 'success');
+      } catch (err) {
+        console.error("Firestore Bed Deletion Error:", err);
+        App.toast(`Firestore Error: ${err.message}`, 'error');
+      }
+    } else {
+      App.toast(`Bed ${bed.number} deleted locally!`, 'success');
+    }
+
+    App.closeModal();
+
+    const mainView = document.getElementById('main-view');
+    if (mainView) BedsModule.render(mainView);
+  },
+
+  openEditRoomModal (roomId) {
+    const room = DB.rooms.find(r => r.id === roomId);
+    if (!room) return;
+
+    App.modal(`
+      ${App.modalHeader(`Edit Room / Ward: ${room.name}`, 'hospital')}
+      <div class="modal-body" style="padding:18px 22px;">
+        <form onsubmit="BedsModule.saveEditRoom(event, '${roomId}')">
+          <div style="margin-bottom:12px;">
+            <label class="form-label">Ward / Room Name *</label>
+            <input class="form-control-input" id="er-name" required value="${room.name}">
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div>
+              <label class="form-label">Ward Type *</label>
+              <select class="form-control-select" id="er-type" required>
+                <option value="General" ${room.type === 'General' ? 'selected' : ''}>General</option>
+                <option value="Intensive" ${room.type === 'Intensive' ? 'selected' : ''}>Intensive</option>
+                <option value="Delivery" ${room.type === 'Delivery' ? 'selected' : ''}>Delivery</option>
+                <option value="Surgical" ${room.type === 'Surgical' ? 'selected' : ''}>Surgical</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Floor Number *</label>
+              <input class="form-control-input" id="er-floor" type="number" required value="${room.floor}">
+            </div>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label class="form-label">Specialized Department *</label>
+            <input class="form-control-input" id="er-dept" required value="${room.department}">
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px; padding-top:14px; border-top:1px solid #E2E8F0;">
+            <button type="button" class="btn-glass" onclick="App.closeModal()">Cancel</button>
+            <button type="submit" class="btn-teal">
+              ${Icons.svg('check', 16)} Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    `, 'modal-md');
+  },
+
+  async saveEditRoom (e, roomId) {
+    e.preventDefault();
+    const name = document.getElementById('er-name').value.trim();
+    const type = document.getElementById('er-type').value;
+    const floor = document.getElementById('er-floor').value;
+    const dept = document.getElementById('er-dept').value.trim();
+
+    const room = DB.rooms.find(r => r.id === roomId);
+    if (!room) return;
+
+    room.name = name;
+    room.type = type;
+    room.floor = Number(floor);
+    room.department = dept;
+
+    if (FB.isConfigured && FB.db) {
+      try {
+        await FB.db.collection('rooms').doc(roomId).set(room);
+        App.toast(`Ward/Room "${name}" updated successfully!`, 'success');
+      } catch (err) {
+        console.error("Firestore Room Update Error:", err);
+        App.toast(`Firestore Error: ${err.message}`, 'error');
+      }
+    } else {
+      App.toast(`Ward/Room "${name}" updated locally!`, 'success');
+    }
+
+    App.closeModal();
+    const mainView = document.getElementById('main-view');
+    if (mainView) BedsModule.render(mainView);
+  },
+
+  async deleteRoom (roomId) {
+    const room = DB.rooms.find(r => r.id === roomId);
+    if (!room) return;
+
+    const roomBeds = DB.beds.filter(b => b.roomId === roomId);
+    const hasOccupied = roomBeds.some(b => b.status === 'occupied');
+    if (hasOccupied) {
+      App.toast('Cannot delete a ward with occupied beds! Discharge patients first.', 'error');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete Ward/Room "${room.name}" and all its ${roomBeds.length} beds?`)) return;
+
+    const bedIdsToDelete = roomBeds.map(b => b.id);
+    DB.beds = DB.beds.filter(b => b.roomId !== roomId);
+
+    const index = DB.rooms.findIndex(r => r.id === roomId);
+    if (index > -1) {
+      DB.rooms.splice(index, 1);
+    }
+
+    DB.metrics.beds.total = Math.max(0, (DB.metrics.beds.total || 0) - roomBeds.length);
+    DB.metrics.beds.available = Math.max(0, (DB.metrics.beds.available || 0) - roomBeds.length);
+
+    if (FB.isConfigured && FB.db) {
+      try {
+        await FB.db.collection('rooms').doc(roomId).delete();
+        
+        const batch = FB.db.batch();
+        for (const bid of bedIdsToDelete) {
+          batch.delete(FB.db.collection('beds').doc(bid));
+        }
+        await batch.commit();
+
+        App.toast(`Ward/Room "${room.name}" and its beds deleted!`, 'success');
+      } catch (err) {
+        console.error("Firestore Room Deletion Error:", err);
+        App.toast(`Firestore Error: ${err.message}`, 'error');
+      }
+    } else {
+      App.toast(`Ward/Room "${room.name}" and its beds deleted locally!`, 'success');
+    }
+
     const mainView = document.getElementById('main-view');
     if (mainView) BedsModule.render(mainView);
   },
