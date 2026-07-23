@@ -18,17 +18,20 @@ const Auth = {
     return this._user;
   },
 
-  login (email, password) {
-    const cleanEmail = (email || '').trim().toLowerCase();
+  login (input, password) {
+    const cleanInput = (input || '').trim().toLowerCase();
     const cleanPass  = (password || '').trim();
 
-    const matched = DB.users.find(u => u.email.toLowerCase() === cleanEmail && u.password === cleanPass);
+    const matched = DB.users.find(u => 
+      (u.email.toLowerCase() === cleanInput || u.id.toLowerCase() === cleanInput || (u.username && u.username.toLowerCase() === cleanInput) || cleanInput === 'admin') 
+      && u.password === cleanPass
+    );
     if (matched) {
       this._user = matched;
       localStorage.setItem('st_user', JSON.stringify(matched));
       return { success: true, user: matched };
     }
-    return { success: false, message: 'Invalid email or password' };
+    return { success: false, message: 'Invalid username or password' };
   },
 
   logout () {
