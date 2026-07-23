@@ -142,14 +142,6 @@
             <div id="opd-sparkline-wrap"></div>
           </div>
 
-          <div class="top-metric-card">
-            <div class="tm-label">Total Revenue</div>
-            <div class="tm-value" style="color:var(--primary-blue)">₱1,032,050.00</div>
-            <div style="font-size:0.72rem; color:var(--success); font-weight:700; margin-top:4px; display:flex; align-items:center; gap:4px;">
-              <span id="tm-rev-icon"></span> ▲ 13.45% Growth
-            </div>
-          </div>
-
           <div class="top-metric-card" style="cursor:pointer;" onclick="App.setNav('beds')">
             <div class="tm-label">Bed Occupancy Rate</div>
             <div class="tm-value" style="color:var(--warning)">73.4%</div>
@@ -297,7 +289,6 @@
       document.getElementById('user-lock-icon').innerHTML = Icons.svg('lock', 14, 'var(--danger)');
 
       document.getElementById('tm-opd-icon').innerHTML    = Icons.svg('users', 16, 'var(--primary-teal)');
-      document.getElementById('tm-rev-icon').innerHTML    = Icons.svg('trendingUp', 12, '#166534');
       document.getElementById('bed-hdr-icon').innerHTML   = Icons.svg('bed', 18, 'var(--primary-teal)');
 
       document.getElementById('sb-icon').innerHTML        = Icons.svg('search', 16, '#94A3B8');

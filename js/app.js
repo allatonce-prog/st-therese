@@ -379,13 +379,7 @@ const App = {
             <div id="opd-sparkline-wrap"></div>
           </div>
 
-          <div class="top-metric-card">
-            <div class="tm-label">Total Revenue</div>
-            <div class="tm-value" style="color:var(--primary-blue)">${DH.fmtPHP(DB.metrics.revenue)}</div>
-            <div style="font-size:0.72rem; color:var(--success); font-weight:700; margin-top:4px; display:flex; align-items:center; gap:4px;">
-              <span id="tm-rev-icon"></span> ▲ ${DB.metrics.revenueGrowth}% Growth
-            </div>
-          </div>
+
 
           <div class="top-metric-card" style="cursor:pointer;" onclick="App.setNav('beds')">
             <div class="tm-label">Bed Occupancy Rate</div>
@@ -530,7 +524,6 @@ const App = {
     setTimeout(() => {
       if (!isNurse && !isDoctor && document.getElementById('tm-opd-icon')) {
         document.getElementById('tm-opd-icon').innerHTML  = Icons.svg('users', 16, 'var(--primary-teal)');
-        document.getElementById('tm-rev-icon').innerHTML  = Icons.svg('trendingUp', 12, '#166534');
         document.getElementById('opd-sparkline-wrap').innerHTML   = Charts.opdSparkline(DB.metrics.opdVisits);
         document.getElementById('billing-donut-wrap').innerHTML    = Charts.billingDonut(DB.metrics.revenue, DB.metrics.pendingPayments);
       }

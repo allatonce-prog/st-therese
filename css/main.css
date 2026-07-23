@@ -230,7 +230,7 @@ body::after {
 
 /* Top Metrics Bar */
 .top-metrics-bar {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;
 }
 .top-metric-card {
   background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: var(--radius);
