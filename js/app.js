@@ -1122,33 +1122,58 @@ const App = {
 
   /* ── ER Triage Intake Wizard Modal ───────────────────────── */
   openIntakeWizardModal () {
+    const nextPid = `0000${String(DB.patients.length + 101).padStart(3,'0')}`;
     this.modal(`
-      ${App.modalHeader('Patient Intake & ER Triage Wizard', 'hospital')}
-      <div class="modal-body" style="padding:18px 22px;">
+      ${App.modalHeader('Patient Registration & ER Triage Wizard', 'hospital')}
+      <div class="modal-body" style="padding:18px 22px; max-height:70vh; overflow-y:auto;">
         <form id="erp-intake-form" onsubmit="App.saveIntake(event)">
           
-          <!-- Section 1: Demographics -->
-          <div class="form-section-box">
-            <div class="form-section-title">
+          <!-- Section 1: Demographics & Personal Details -->
+          <div class="form-section-box" style="margin-bottom: 18px;">
+            <div class="form-section-title" style="font-weight:800; font-size:0.9rem; color:var(--primary-teal); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
               <span>${Icons.svg('users', 16, 'var(--primary-teal)')}</span>
-              <span>1. Patient Demographics</span>
+              <span>1. Patient Demographics & Personal Details</span>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px;">
               <div>
+                <label class="form-label">Patient ID *</label>
+                <input class="form-control-input" id="if-pid" required value="${nextPid}">
+              </div>
+              <div>
+                <label class="form-label">Civil Status *</label>
+                <select class="form-control-select" id="if-civilstatus" required>
+                  <option value="Single">Single</option>
+                  <option value="Married">Married</option>
+                  <option value="Divorced">Divorced</option>
+                  <option value="Widowed">Widowed</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:10px;">
+              <div>
                 <label class="form-label">First Name *</label>
-                <input class="form-control-input" id="if-fname" required placeholder="e.g. Maria">
+                <input class="form-control-input" id="if-fname" required placeholder="First Name">
+              </div>
+              <div>
+                <label class="form-label">Middle Name</label>
+                <input class="form-control-input" id="if-mname" placeholder="Middle Name">
               </div>
               <div>
                 <label class="form-label">Last Name *</label>
-                <input class="form-control-input" id="if-lname" required placeholder="e.g. Santos">
+                <input class="form-control-input" id="if-lname" required placeholder="Last Name">
               </div>
             </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:10px;">
               <div>
-                <label class="form-label">Birthdate *</label>
-                <input class="form-control-input" id="if-dob" type="date" required>
+                <label class="form-label">Birth Date *</label>
+                <input class="form-control-input" id="if-dob" type="date" required onchange="App.calculateAge(this.value)">
+              </div>
+              <div>
+                <label class="form-label">Age *</label>
+                <input class="form-control-input" id="if-age" type="number" required placeholder="Age" readonly style="background:#F1F5F9;">
               </div>
               <div>
                 <label class="form-label">Sex *</label>
@@ -1159,42 +1184,83 @@ const App = {
               </div>
             </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px;">
               <div>
-                <label class="form-label">Blood Type *</label>
-                <select class="form-control-select" id="if-blood" required>
-                  <option value="O+">O+</option>
-                  <option value="A+">A+</option>
-                  <option value="B+">B+</option>
-                  <option value="AB+">AB+</option>
-                  <option value="O-">O-</option>
-                  <option value="A-">A-</option>
-                </select>
+                <label class="form-label">Address *</label>
+                <input class="form-control-input" id="if-address" required placeholder="Complete home address">
               </div>
               <div>
-                <label class="form-label">Religion / Faith *</label>
-                <select class="form-control-select" id="if-religion" required>
-                  <option value="Roman Catholic">Roman Catholic</option>
-                  <option value="Christian / Protestant">Christian / Protestant</option>
-                  <option value="Islam">Islam</option>
-                  <option value="Iglesia ni Cristo">Iglesia ni Cristo</option>
-                  <option value="Seventh-day Adventist">Seventh-day Adventist</option>
-                  <option value="Jehovah's Witness">Jehovah's Witness</option>
-                  <option value="Buddhism">Buddhism</option>
-                  <option value="Other / None">Other / None</option>
-                </select>
+                <label class="form-label">Phone Number *</label>
+                <input class="form-control-input" id="if-phone" required placeholder="e.g. 0917XXXXXXX">
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px;">
+              <div>
+                <label class="form-label">Religion *</label>
+                <input class="form-control-input" id="if-religion" required placeholder="e.g. Roman Catholic" value="Roman Catholic">
+              </div>
+              <div>
+                <label class="form-label">Nationality *</label>
+                <input class="form-control-input" id="if-nationality" required placeholder="e.g. Filipino" value="Filipino">
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+              <div>
+                <label class="form-label">Occupation *</label>
+                <input class="form-control-input" id="if-occupation" required placeholder="e.g. Teacher, Engineer">
+              </div>
+              <div>
+                <label class="form-label">PhilHealth Number</label>
+                <input class="form-control-input" id="if-philhealth" placeholder="PH-XXXXXXXXXXXX">
+              </div>
+              <div>
+                <label class="form-label">Insurance / HMO</label>
+                <input class="form-control-input" id="if-insurance" placeholder="e.g. Maxicare, None" value="None">
               </div>
             </div>
           </div>
 
-          <!-- Section 2: Clinical Triage & Placement -->
-          <div class="form-section-box" style="margin-bottom:0;">
-            <div class="form-section-title">
-              <span>${Icons.svg('activity', 16, 'var(--primary-teal)')}</span>
-              <span>2. Clinical Triage & Unit Placement</span>
+          <!-- Section 2: Emergency Contact -->
+          <div class="form-section-box" style="margin-bottom: 18px;">
+            <div class="form-section-title" style="font-weight:800; font-size:0.9rem; color:var(--primary-teal); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+              <span>${Icons.svg('shield', 16, 'var(--primary-teal)')}</span>
+              <span>2. Emergency Contact Details</span>
             </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+              <div>
+                <label class="form-label">Emergency Contact *</label>
+                <input class="form-control-input" id="if-econtact" required placeholder="Contact Full Name">
+              </div>
+              <div>
+                <label class="form-label">Relationship *</label>
+                <input class="form-control-input" id="if-relationship" required placeholder="e.g. Spouse, Parent">
+              </div>
+              <div>
+                <label class="form-label">Contact Number *</label>
+                <input class="form-control-input" id="if-ephone" required placeholder="e.g. 0917XXXXXXX">
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Clinical Triage & Ward Bed Assignment -->
+          <div class="form-section-box" style="margin-bottom:0;">
+            <div class="form-section-title" style="font-weight:800; font-size:0.9rem; color:var(--primary-teal); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+              <span>${Icons.svg('activity', 16, 'var(--primary-teal)')}</span>
+              <span>3. Clinical Triage & Ward Bed Assignment</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:10px;">
+              <div>
+                <label class="form-label">Mode of Arrival *</label>
+                <select class="form-control-select" id="if-mode-arrival" required>
+                  <option value="Walk-in">Walk-in</option>
+                  <option value="Ambulance">Ambulance</option>
+                  <option value="Referral">Referral</option>
+                </select>
+              </div>
               <div>
                 <label class="form-label">Department *</label>
                 <select class="form-control-select" id="if-dept" required>
@@ -1217,7 +1283,7 @@ const App = {
 
             <div style="margin-bottom:10px;">
               <label class="form-label">Chief Complaint / Primary Symptom *</label>
-              <input class="form-control-input" id="if-complaint" required placeholder="e.g., Acute abdominal pain, High fever, Sudden vaginal bleeding">
+              <textarea class="form-control-input" id="if-complaint" required style="height: 50px; font-family:inherit; padding:8px 12px;" placeholder="Describe symptoms or reasons for admission..."></textarea>
             </div>
 
             <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:12px;">
@@ -1244,13 +1310,20 @@ const App = {
           <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px; padding-top:14px; border-top:1px solid #E2E8F0;">
             <button type="button" class="btn-glass" onclick="App.closeModal()">Cancel</button>
             <button type="submit" class="btn-teal">
-              ${Icons.svg('check', 16)} Save Patient Card & Admit
+              ${Icons.svg('check', 16)} Register Patient
             </button>
           </div>
         </form>
       </div>
     `, 'modal-md');
     this.updateIntakeBedOptions();
+  },
+
+  calculateAge (dobVal) {
+    const ageEl = document.getElementById('if-age');
+    if (ageEl) {
+      ageEl.value = dobVal ? DH.age(dobVal) : '';
+    }
   },
 
   updateIntakeBedOptions () {
@@ -1270,29 +1343,44 @@ const App = {
 
   saveIntake (e) {
     e.preventDefault();
+    const pid   = document.getElementById('if-pid').value.trim();
+    const civilStatus = document.getElementById('if-civilstatus').value;
     const fname = document.getElementById('if-fname').value.trim();
+    const mname = document.getElementById('if-mname').value.trim();
     const lname = document.getElementById('if-lname').value.trim();
     const dob   = document.getElementById('if-dob').value;
     const sex   = document.getElementById('if-sex').value;
-    const blood = document.getElementById('if-blood')?.value || 'O+';
-    const religion = document.getElementById('if-religion')?.value || 'Roman Catholic';
+    const address = document.getElementById('if-address').value.trim();
+    const phone = document.getElementById('if-phone').value.trim();
+    const religion = document.getElementById('if-religion').value.trim();
+    const nationality = document.getElementById('if-nationality').value.trim();
+    const occupation = document.getElementById('if-occupation').value.trim();
+    const philhealth = document.getElementById('if-philhealth').value.trim() || `PH-${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+    const insurance = document.getElementById('if-insurance').value.trim() || 'None';
+
+    const econtact = document.getElementById('if-econtact').value.trim();
+    const relationship = document.getElementById('if-relationship').value.trim();
+    const ephone = document.getElementById('if-ephone').value.trim();
+
+    const modeArrival = document.getElementById('if-mode-arrival').value;
     const dept  = document.getElementById('if-dept').value;
     const complaint = document.getElementById('if-complaint').value.trim();
     const triage    = document.getElementById('if-triage').value;
     const destName  = document.getElementById('if-dest')?.value || '2001 (Station A)';
-    const pid   = `0000${String(DB.patients.length + 100).padStart(3,'0')}`;
 
     const todayStr = new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
 
     const newPatient = {
       id: pid,
-      firstName: fname, lastName: lname, middleName: '',
+      firstName: fname, lastName: lname, middleName: mname,
       birthdate: dob, age: dob ? DH.age(dob) : 30, sex,
+      address, phone, civilStatus, religion, nationality, occupation,
+      emergencyContact: econtact, relationship, contactNumber: ephone,
+      philHealthNumber: philhealth, insurance, modeOfArrival: modeArrival,
       department: dept, status: 'Admitted',
       registeredDate: todayStr, triageLevel: triage,
       chiefComplaint: complaint, admittingDiagnosis: complaint,
-      bloodType: blood, religion: religion, allergies: 'None known',
-      philHealthNumber: `PH-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+      allergies: 'None known'
     };
 
     // Add to master patient database
