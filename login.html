@@ -26,7 +26,7 @@
           <span style="font-weight:800; font-size:0.85rem; letter-spacing:0.04em;">St. Therese MedTech</span>
         </div>
 
-        <h1 class="brand-hero-title">Hospital Information & Clinical ERP System</h1>
+        <h1 class="brand-hero-title">Hospital Information and Clinical Management System</h1>
       </div>
 
       <div class="brand-hero-bottom">
@@ -71,12 +71,12 @@
           <div class="form-group">
             <label class="form-label">Department</label>
             <select id="login-department" class="pill-select" required>
-              <option value="administration">Administration & IT</option>
+              <option value="administration">IT</option>
               <option value="medicine">Internal Medicine</option>
-              <option value="cardiology">Cardiology & Critical Care</option>
-              <option value="obgyn">OB-GYN</option>
+              <option value="cardiology">INTENSIVE CARE UNIT</option>
+              <option value="obgyn">delivery room</option>
               <option value="pediatrics">Pediatrics</option>
-              <option value="surgery">Surgery</option>
+              <option value="surgery">operating room</option>
               <option value="laboratory">Laboratory & Diagnostics</option>
               <option value="emergency">Emergency Department</option>
               <option value="pharmacy">Pharmacy</option>
@@ -87,21 +87,16 @@
           <div class="form-group">
             <label class="form-label">Institution</label>
             <select id="login-institution" class="pill-select" required>
-              <option value="main">St. Therese Main Medical Center</option>
-              <option value="specialty">St. Therese Specialty Clinic</option>
-              <option value="er">St. Therese Emergency Center</option>
-              <option value="health-system">St. Therese Health System</option>
+              <option value="main">St. Paul University Hospital</option>
+              <option value="specialty">Southwestern University Hospital</option>
+              <option value="er">Lapu2 Hospital</option>
+              <option value="health-system">Surigao Provincial Hospital</option>
             </select>
           </div>
 
           <!-- Main Pill Action Button -->
           <button type="submit" class="btn-pill-submit">
             Log In
-          </button>
-
-          <!-- Secondary SSO Button -->
-          <button type="button" class="btn-pill-sso" onclick="LoginApp.autofill('admin', 'admin', 'administration', 'main')">
-            <span id="sso-shield-icon"></span> Sign In with Hospital SSO
           </button>
         </form>
 
@@ -135,7 +130,6 @@
       init () {
         document.getElementById('hero-logo-icon').innerHTML = Icons.logo(22);
         document.getElementById('top-pill-logo').innerHTML  = Icons.logo(26);
-        document.getElementById('sso-shield-icon').innerHTML= Icons.svg('shield', 16, '#0288D1');
       },
 
       autofill (user, pass, dept = 'administration', inst = 'main') {
