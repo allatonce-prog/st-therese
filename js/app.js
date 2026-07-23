@@ -278,7 +278,7 @@ const App = {
             </span>
           ` : '')}
           <button class="btn-teal" onclick="App.openIntakeWizardModal()">
-            <span id="btn-plus-icon"></span> + New Patient Card
+            <span id="btn-plus-icon"></span> New Patient Card
           </button>
           <button class="btn-glass" onclick="App.toast('New Issue Slip created','info')">
             <span id="btn-issue-icon"></span> New Issue

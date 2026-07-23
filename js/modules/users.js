@@ -21,7 +21,7 @@ const UsersModule = {
             ${Icons.svg('chevronLeft', 14)} Back to Dashboard
           </button>
           <button class="btn-teal" onclick="UsersModule.openUserModal()">
-            ${Icons.svg('plus', 15)} + Create Staff Account
+            ${Icons.svg('plus', 15)} Create Staff Account
           </button>
         </div>
       </div>

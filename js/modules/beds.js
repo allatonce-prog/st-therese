@@ -30,13 +30,13 @@ const BedsModule = {
             ${Icons.svg('chevronLeft', 14)} Back to Dashboard
           </button>
           <button class="btn-teal" onclick="BedsModule.openAddRoomModal()">
-            ${Icons.svg('plus', 15)} + Add Room/Ward
+            ${Icons.svg('plus', 15)} Add Room/Ward
           </button>
           <button class="btn-teal" onclick="BedsModule.openAddBedModal()">
-            ${Icons.svg('plus', 15)} + Add Bed
+            ${Icons.svg('plus', 15)} Add Bed
           </button>
           <button class="btn-teal" onclick="App.openIntakeWizardModal()">
-            ${Icons.svg('plus', 15)} + New Admission
+            ${Icons.svg('plus', 15)} New Admission
           </button>
         </div>
       </div>
