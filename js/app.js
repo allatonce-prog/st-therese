@@ -1138,7 +1138,7 @@ const App = {
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px;">
               <div>
                 <label class="form-label">Patient ID *</label>
-                <input class="form-control-input" id="if-pid" required value="${nextPid}">
+                <input class="form-control-input" id="if-pid" readonly style="background:#F1F5F9; color:#64748B;" value="${nextPid}">
               </div>
               <div>
                 <label class="form-label">Civil Status *</label>
