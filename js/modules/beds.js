@@ -29,6 +29,9 @@ const BedsModule = {
           <button class="btn-glass" onclick="App.renderDashboard()">
             ${Icons.svg('chevronLeft', 14)} Back to Dashboard
           </button>
+          <button class="btn-teal" onclick="BedsModule.openAddBedModal()">
+            ${Icons.svg('plus', 15)} + Add Bed
+          </button>
           <button class="btn-teal" onclick="App.openIntakeWizardModal()">
             ${Icons.svg('plus', 15)} + New Admission
           </button>
@@ -193,5 +196,89 @@ const BedsModule = {
 
     const container = document.getElementById('floorplan-grid-container');
     if (container) container.innerHTML = this._renderFloorPlanRooms(filtered);
+  },
+
+  openAddBedModal () {
+    const rooms = DB.rooms;
+    App.modal(`
+      ${App.modalHeader('Add New Bed to Ward / Unit', 'bed')}
+      <div class="modal-body" style="padding:18px 22px;">
+        <form onsubmit="BedsModule.saveNewBed(event)">
+          <div style="margin-bottom:12px;">
+            <label class="form-label">Select Room / Ward *</label>
+            <select class="form-control-select" id="ab-room" required>
+              ${rooms.map(r => `<option value="${r.id}">${r.name} (${r.department})</option>`).join('')}
+            </select>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label class="form-label">Bed Number / Name *</label>
+            <input class="form-control-input" id="ab-number" required placeholder="e.g. 18, ICU-3, DR-3">
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px; padding-top:14px; border-top:1px solid #E2E8F0;">
+            <button type="button" class="btn-glass" onclick="App.closeModal()">Cancel</button>
+            <button type="submit" class="btn-teal">
+              ${Icons.svg('check', 16)} Add Bed
+            </button>
+          </div>
+        </form>
+      </div>
+    `, 'modal-md');
+  },
+
+  async saveNewBed (e) {
+    e.preventDefault();
+    const roomId = document.getElementById('ab-room').value;
+    const number = document.getElementById('ab-number').value.trim();
+
+    if (!roomId || !number) return;
+
+    // Check if bed already exists in this room
+    const exists = DB.beds.some(b => b.roomId === roomId && b.number.toLowerCase() === number.toLowerCase());
+    if (exists) {
+      App.toast(`Bed ${number} already exists in this room!`, 'error');
+      return;
+    }
+
+    const newBed = {
+      id: DH.nextId('B'),
+      roomId: roomId,
+      number: number,
+      status: 'available'
+    };
+
+    DB.beds.push(newBed);
+
+    // Update Room totalBeds count
+    const room = DB.rooms.find(r => r.id === roomId);
+    if (room) {
+      room.totalBeds = (room.totalBeds || 0) + 1;
+      if (FB.isConfigured && FB.db) {
+        FB.db.collection('rooms').doc(roomId).update({ totalBeds: room.totalBeds }).catch(err => console.error(err));
+      }
+    }
+
+    // Update global metrics (fallback if Firestore sync fails or delay)
+    DB.metrics.beds.total = (DB.metrics.beds.total || 0) + 1;
+    DB.metrics.beds.available = (DB.metrics.beds.available || 0) + 1;
+
+    if (FB.isConfigured && FB.db) {
+      try {
+        await FB.db.collection('beds').doc(newBed.id).set(newBed);
+        App.toast(`Bed ${number} added successfully to ${room ? room.name : 'ward'}!`, 'success');
+      } catch (err) {
+        console.error("Firestore Bed Creation Error:", err);
+        App.toast(`Firestore Error: ${err.message}`, 'error');
+      }
+    } else {
+      App.toast(`Bed ${number} added locally to ${room ? room.name : 'ward'}!`, 'success');
+    }
+
+    App.closeModal();
+    
+    // Re-render Bed & Ward System page
+    const mainView = document.getElementById('main-view');
+    if (mainView) BedsModule.render(mainView);
   },
 };
